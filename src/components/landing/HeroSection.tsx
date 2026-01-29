@@ -1,7 +1,11 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Upload, Sparkles, Brain, Zap } from "lucide-react";
+import { DemoModal } from "@/components/demo/DemoModal";
 
 export function HeroSection() {
+  const [demoOpen, setDemoOpen] = useState(false);
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
       {/* Background effects */}
@@ -39,9 +43,11 @@ export function HeroSection() {
               Start Free Trial
               <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Button>
-            <Button variant="glass" size="xl">
+            <Button variant="glass" size="xl" onClick={() => setDemoOpen(true)}>
               Watch Demo
             </Button>
+
+            <DemoModal open={demoOpen} onOpenChange={setDemoOpen} />
           </div>
 
           {/* Feature Pills */}
