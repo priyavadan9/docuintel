@@ -1,10 +1,15 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Upload, Sparkles, Brain, Zap } from "lucide-react";
-import { DemoModal } from "@/components/demo/DemoModal";
+import { DemoPlatform } from "@/components/demo/platform/DemoPlatform";
 
 export function HeroSection() {
   const [demoOpen, setDemoOpen] = useState(false);
+
+  // If demo is open, render the full platform
+  if (demoOpen) {
+    return <DemoPlatform onClose={() => setDemoOpen(false)} />;
+  }
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
@@ -46,8 +51,6 @@ export function HeroSection() {
             <Button variant="glass" size="xl" onClick={() => setDemoOpen(true)}>
               Watch Demo
             </Button>
-
-            <DemoModal open={demoOpen} onOpenChange={setDemoOpen} />
           </div>
 
           {/* Feature Pills */}
