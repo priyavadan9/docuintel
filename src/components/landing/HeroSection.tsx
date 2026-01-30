@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Upload, Sparkles, Brain, Zap } from "lucide-react";
-import { DemoPlatform } from "@/components/demo/platform/DemoPlatform";
+import { CFAPlatform } from "@/components/cfa/CFAPlatform";
 
 export function HeroSection() {
   const [demoOpen, setDemoOpen] = useState(false);
 
-  // If demo is open, render the full platform
+  // If demo is open, render the full CFA platform
   if (demoOpen) {
-    return <DemoPlatform onClose={() => setDemoOpen(false)} />;
+    return <CFAPlatform onClose={() => setDemoOpen(false)} />;
   }
 
   return (
