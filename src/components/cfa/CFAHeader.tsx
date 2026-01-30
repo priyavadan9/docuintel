@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from "react";
 import { useCFA } from "@/contexts/CFAContext";
 import { Search, Bell, User, Clock, AlertTriangle, FileText, FlaskConical, Building2, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useState, useEffect, useRef } from "react";
 
 export function CFAHeader() {
   const { 
@@ -56,7 +56,6 @@ export function CFAHeader() {
         setCurrentView("archaeologist");
         break;
       case "supplier":
-        // Navigate to detective with supplier filter
         setCurrentView("detective");
         break;
     }
@@ -88,10 +87,10 @@ export function CFAHeader() {
         <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5">
           <Clock className="w-4 h-4 text-amber-600" />
           <div className="text-sm">
-            <span className="text-slate-600">Submission Deadline: </span>
+            <span className="text-slate-600">Deadline: </span>
             <span className="font-semibold text-amber-700">Oct 13, 2026</span>
           </div>
-          <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 ml-1">
+          <Badge className="bg-amber-100 text-amber-800 border border-amber-200 ml-1">
             {daysRemaining} Days
           </Badge>
         </div>
@@ -109,7 +108,7 @@ export function CFAHeader() {
               setSearchOpen(true);
             }}
             onFocus={() => searchQuery && setSearchOpen(true)}
-            className="pl-10 pr-8 bg-slate-50 border-slate-200 focus:bg-white"
+            className="pl-10 pr-8 bg-slate-50 border-slate-200 focus:bg-white text-slate-900 placeholder:text-slate-400"
           />
           {searchQuery && (
             <button 
@@ -124,7 +123,7 @@ export function CFAHeader() {
         {/* Search Results Dropdown */}
         {searchOpen && searchResults.length > 0 && (
           <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-lg shadow-lg z-50 overflow-hidden">
-            <div className="p-2 text-xs text-slate-500 border-b bg-slate-50">
+            <div className="p-2 text-xs text-slate-500 border-b border-slate-100 bg-slate-50">
               {searchResults.length} results found
             </div>
             <div className="max-h-80 overflow-y-auto">
@@ -132,19 +131,19 @@ export function CFAHeader() {
                 <button
                   key={`${result.type}-${result.id}`}
                   onClick={() => handleResultClick(result)}
-                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 text-left transition-colors border-b border-slate-100 last:border-0"
+                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 text-left transition-colors border-b border-slate-50 last:border-0"
                 >
                   {getResultIcon(result.type)}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-900 truncate">{result.title}</p>
+                    <p className="text-sm font-medium text-slate-800 truncate">{result.title}</p>
                     <p className="text-xs text-slate-500 truncate">{result.subtitle}</p>
                   </div>
                   {result.score !== undefined && (
                     <Badge className={cn(
-                      "shrink-0",
-                      result.score >= 80 ? "bg-rose-100 text-rose-700" :
-                      result.score >= 50 ? "bg-amber-100 text-amber-700" :
-                      "bg-emerald-100 text-emerald-700"
+                      "shrink-0 border",
+                      result.score >= 80 ? "bg-rose-100 text-rose-700 border-rose-200" :
+                      result.score >= 50 ? "bg-amber-100 text-amber-700 border-amber-200" :
+                      "bg-emerald-100 text-emerald-700 border-emerald-200"
                     )}>
                       {result.score}/100
                     </Badge>
@@ -168,18 +167,18 @@ export function CFAHeader() {
         {stats.dataGaps > 0 && (
           <button 
             onClick={handleGapsClick}
-            className="flex items-center gap-2 text-sm hover:bg-amber-50 px-3 py-1.5 rounded-lg transition-colors"
+            className="flex items-center gap-2 text-sm hover:bg-amber-50 px-3 py-1.5 rounded-lg transition-colors border border-transparent hover:border-amber-200"
           >
             <AlertTriangle className="w-4 h-4 text-amber-500" />
             <span className="text-slate-600">
-              <span className="font-medium text-amber-600">{stats.dataGaps}</span> gaps need attention
+              <span className="font-semibold text-amber-600">{stats.dataGaps}</span> gaps need attention
             </span>
           </button>
         )}
 
         {/* Notifications */}
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="w-5 h-5 text-slate-600" />
+        <Button variant="ghost" size="icon" className="relative text-slate-600 hover:text-slate-900 hover:bg-slate-100">
+          <Bell className="w-5 h-5" />
           <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 rounded-full text-[10px] text-white flex items-center justify-center font-medium">
             3
           </span>
@@ -191,7 +190,7 @@ export function CFAHeader() {
             <p className="text-sm font-medium text-slate-900">John Smith</p>
             <p className="text-xs text-slate-500">Compliance Officer</p>
           </div>
-          <div className="w-9 h-9 rounded-full bg-cfa-accent flex items-center justify-center">
+          <div className="w-9 h-9 rounded-full bg-teal-600 flex items-center justify-center">
             <User className="w-5 h-5 text-white" />
           </div>
         </div>

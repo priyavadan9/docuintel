@@ -9,9 +9,6 @@ import {
   Eye,
   Sparkles,
   FileSearch,
-  Filter,
-  Clock,
-  FileSpreadsheet,
   Mail,
   Cloud,
   Archive,
@@ -43,14 +40,12 @@ export function ArchaeologistView() {
     addAuditEntry,
     documents,
     setDocuments,
-    chemicalRecords,
     setChemicalRecords
   } = useCFA();
   
   const [isDragging, setIsDragging] = useState(false);
   const [documentFilter, setDocumentFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
 
   const simulateProcessing = useCallback((file: UploadedFile) => {
     const stages: ProcessingStatus[] = ["uploading", "ocr", "extracting", "complete"];
@@ -133,7 +128,6 @@ export function ArchaeologistView() {
   const handleApproveAndIndex = (file: UploadedFile) => {
     if (!file.extractedData) return;
     
-    // Add to documents list
     const newDocument: Document = {
       id: `doc-${Date.now()}`,
       name: file.name,
@@ -149,7 +143,6 @@ export function ArchaeologistView() {
     
     setDocuments(prev => [newDocument, ...prev]);
     
-    // Add chemical record
     const newChemical = {
       id: `chem-${Date.now()}`,
       productName: file.extractedData.chemical,
@@ -163,8 +156,6 @@ export function ArchaeologistView() {
     };
     
     setChemicalRecords(prev => [newChemical, ...prev]);
-    
-    // Remove from upload queue
     setUploadedFiles(prev => prev.filter(f => f.id !== file.id));
     setSelectedFile(null);
     
@@ -204,11 +195,11 @@ export function ArchaeologistView() {
 
   const getDocStatusBadge = (status: string) => {
     switch (status) {
-      case "indexed": return { bg: "bg-blue-100", text: "text-blue-700", label: "Indexed" };
-      case "verified": return { bg: "bg-emerald-100", text: "text-emerald-700", label: "Verified" };
-      case "pending": return { bg: "bg-amber-100", text: "text-amber-700", label: "Pending" };
-      case "processing": return { bg: "bg-violet-100", text: "text-violet-700", label: "Processing" };
-      default: return { bg: "bg-slate-100", text: "text-slate-700", label: status };
+      case "indexed": return { className: "bg-blue-100 text-blue-700 border-blue-200", label: "Indexed" };
+      case "verified": return { className: "bg-emerald-100 text-emerald-700 border-emerald-200", label: "Verified" };
+      case "pending": return { className: "bg-amber-100 text-amber-700 border-amber-200", label: "Pending" };
+      case "processing": return { className: "bg-violet-100 text-violet-700 border-violet-200", label: "Processing" };
+      default: return { className: "bg-slate-100 text-slate-700 border-slate-200", label: status };
     }
   };
 
@@ -244,24 +235,24 @@ export function ArchaeologistView() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-              <Sparkles className="w-6 h-6 text-cfa-accent" />
+              <Sparkles className="w-6 h-6 text-teal-600" />
               The Archaeologist
             </h2>
             <p className="text-slate-500 mt-1">Unearth hidden PFAS data from legacy documents</p>
           </div>
-          <Button onClick={handleMockUpload} className="bg-cfa-accent hover:bg-cfa-accent/90">
+          <Button onClick={handleMockUpload} className="bg-teal-600 hover:bg-teal-700 text-white">
             <Upload className="w-4 h-4 mr-2" />
             Demo Upload
           </Button>
         </div>
 
         <Tabs defaultValue="upload" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="upload" className="gap-2">
+          <TabsList className="bg-white border border-slate-200">
+            <TabsTrigger value="upload" className="gap-2 data-[state=active]:bg-teal-50 data-[state=active]:text-teal-700">
               <Upload className="w-4 h-4" />
               Upload & Process
             </TabsTrigger>
-            <TabsTrigger value="documents" className="gap-2">
+            <TabsTrigger value="documents" className="gap-2 data-[state=active]:bg-teal-50 data-[state=active]:text-teal-700">
               <FileText className="w-4 h-4" />
               Document Library ({documents.length})
             </TabsTrigger>
@@ -270,9 +261,9 @@ export function ArchaeologistView() {
           <TabsContent value="upload" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Upload Zone */}
-              <Card className="shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-lg">Upload Zone</CardTitle>
+              <Card className="bg-white border border-slate-200 shadow-sm">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base font-semibold text-slate-800">Upload Zone</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div
@@ -282,11 +273,11 @@ export function ArchaeologistView() {
                     className={cn(
                       "border-2 border-dashed rounded-xl p-12 text-center transition-all",
                       isDragging 
-                        ? "border-cfa-accent bg-teal-50" 
+                        ? "border-teal-400 bg-teal-50" 
                         : "border-slate-300 hover:border-slate-400 bg-slate-50"
                     )}
                   >
-                    <Upload className={cn("w-12 h-12 mx-auto mb-4", isDragging ? "text-cfa-accent" : "text-slate-400")} />
+                    <Upload className={cn("w-12 h-12 mx-auto mb-4", isDragging ? "text-teal-500" : "text-slate-400")} />
                     <h3 className="text-lg font-semibold text-slate-700 mb-2">
                       Drag & Drop Legacy Data
                     </h3>
@@ -295,7 +286,7 @@ export function ArchaeologistView() {
                     </p>
                     <div className="flex flex-wrap gap-2 justify-center">
                       {["PDF", "DOCX", "XLSX", "CSV", "PST", "TIFF"].map(format => (
-                        <Badge key={format} variant="secondary" className="bg-slate-200 text-slate-600">
+                        <Badge key={format} variant="outline" className="bg-white border-slate-300 text-slate-600">
                           {format}
                         </Badge>
                       ))}
@@ -305,19 +296,19 @@ export function ArchaeologistView() {
               </Card>
 
               {/* Processing Queue */}
-              <Card className="shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <FileSearch className="w-5 h-5 text-cfa-accent" />
+              <Card className="bg-white border border-slate-200 shadow-sm">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base font-semibold text-slate-800 flex items-center gap-2">
+                    <FileSearch className="w-4 h-4 text-teal-600" />
                     Processing Queue
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {uploadedFiles.length === 0 ? (
-                    <div className="text-center py-12 text-slate-500">
-                      <FileText className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                      <p>No files in queue</p>
-                      <p className="text-sm">Upload files to begin processing</p>
+                    <div className="text-center py-12">
+                      <FileText className="w-12 h-12 mx-auto mb-4 text-slate-300" />
+                      <p className="font-medium text-slate-700">No files in queue</p>
+                      <p className="text-sm text-slate-500">Upload files to begin processing</p>
                     </div>
                   ) : (
                     <div className="space-y-3 max-h-96 overflow-y-auto">
@@ -327,7 +318,7 @@ export function ArchaeologistView() {
                           className={cn(
                             "p-4 rounded-lg border transition-all cursor-pointer",
                             selectedFile?.id === file.id 
-                              ? "border-cfa-accent bg-teal-50" 
+                              ? "border-teal-400 bg-teal-50" 
                               : "border-slate-200 hover:border-slate-300 bg-white"
                           )}
                           onClick={() => file.status === "complete" && setSelectedFile(file)}
@@ -336,14 +327,14 @@ export function ArchaeologistView() {
                             <div className="flex items-center gap-3">
                               <FileText className="w-8 h-8 text-slate-400" />
                               <div>
-                                <p className="font-medium text-slate-900 text-sm">{file.name}</p>
+                                <p className="font-medium text-slate-800 text-sm">{file.name}</p>
                                 <p className="text-xs text-slate-500">{formatFileSize(file.size)}</p>
                               </div>
                             </div>
                             {file.status === "complete" ? (
                               <CheckCircle2 className="w-5 h-5 text-emerald-500" />
                             ) : (
-                              <Loader2 className="w-5 h-5 text-cfa-accent animate-spin" />
+                              <Loader2 className="w-5 h-5 text-teal-500 animate-spin" />
                             )}
                           </div>
                           
@@ -357,10 +348,7 @@ export function ArchaeologistView() {
                               )}
                             </div>
                             {file.status !== "complete" && (
-                              <Progress 
-                                value={file.progress} 
-                                className="h-1.5" 
-                              />
+                              <Progress value={file.progress} className="h-1.5" />
                             )}
                           </div>
 
@@ -368,7 +356,7 @@ export function ArchaeologistView() {
                             <Button 
                               size="sm" 
                               variant="ghost" 
-                              className="mt-2 text-cfa-accent hover:text-cfa-accent/80"
+                              className="mt-2 text-teal-600 hover:text-teal-700 hover:bg-teal-50"
                               onClick={(e) => { e.stopPropagation(); setSelectedFile(file); }}
                             >
                               <Eye className="w-4 h-4 mr-1" />
@@ -385,10 +373,10 @@ export function ArchaeologistView() {
 
             {/* Verification View */}
             {selectedFile && selectedFile.extractedData && (
-              <Card className="shadow-sm animate-fade-in">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="text-lg">Document Verification</CardTitle>
-                  <Button variant="ghost" size="icon" onClick={() => setSelectedFile(null)}>
+              <Card className="bg-white border border-slate-200 shadow-sm animate-fade-in">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-base font-semibold text-slate-800">Document Verification</CardTitle>
+                  <Button variant="ghost" size="icon" onClick={() => setSelectedFile(null)} className="text-slate-400 hover:text-slate-600">
                     <X className="w-5 h-5" />
                   </Button>
                 </CardHeader>
@@ -398,35 +386,35 @@ export function ArchaeologistView() {
                     <div className="bg-slate-100 rounded-lg p-4 min-h-96">
                       <div className="bg-white rounded border border-slate-200 p-6 h-full">
                         <div className="space-y-4 text-sm text-slate-600">
-                          <div className="text-center border-b pb-4 mb-4">
-                            <h4 className="font-bold text-lg text-slate-900">PURCHASE ORDER</h4>
+                          <div className="text-center border-b border-slate-200 pb-4 mb-4">
+                            <h4 className="font-bold text-lg text-slate-800">PURCHASE ORDER</h4>
                             <p className="text-slate-500">ChemCorp Industrial Supplies</p>
                           </div>
                           <div className="grid grid-cols-2 gap-4">
                             <div>
-                              <p className="font-semibold">Date:</p>
+                              <p className="font-semibold text-slate-700">Date:</p>
                               <p>April 12, 2012</p>
                             </div>
                             <div>
-                              <p className="font-semibold">PO Number:</p>
+                              <p className="font-semibold text-slate-700">PO Number:</p>
                               <p>PO-2012-0412</p>
                             </div>
                           </div>
-                          <div className="border-t pt-4 mt-4">
-                            <p className="font-semibold mb-2">Item Description:</p>
+                          <div className="border-t border-slate-200 pt-4 mt-4">
+                            <p className="font-semibold text-slate-700 mb-2">Item Description:</p>
                             <p>Industrial Coating Agent</p>
                             <p className="mt-2">
-                              <span className="font-semibold">Chemical: </span>
-                              <span className="bg-yellow-200 px-1 rounded font-medium text-slate-900">
+                              <span className="font-semibold text-slate-700">Chemical: </span>
+                              <span className="bg-amber-200 px-1 rounded font-medium text-slate-800">
                                 Polytetrafluoroethylene
                               </span>
                             </p>
                             <p className="mt-1">
-                              <span className="font-semibold">CAS: </span>9002-84-0
+                              <span className="font-semibold text-slate-700">CAS: </span>9002-84-0
                             </p>
                           </div>
-                          <div className="border-t pt-4 mt-4">
-                            <p className="font-semibold">Quantity: </p>
+                          <div className="border-t border-slate-200 pt-4 mt-4">
+                            <p className="font-semibold text-slate-700">Quantity: </p>
                             <p>500 kg @ $45.00/kg</p>
                           </div>
                         </div>
@@ -437,8 +425,8 @@ export function ArchaeologistView() {
                     <div className="space-y-4">
                       <div className="flex items-center gap-2 mb-4">
                         <Sparkles className="w-5 h-5 text-violet-500" />
-                        <h4 className="font-semibold text-slate-900">Extracted Intelligence</h4>
-                        <Badge className="bg-violet-100 text-violet-700 hover:bg-violet-100">AI Inferred</Badge>
+                        <h4 className="font-semibold text-slate-800">Extracted Intelligence</h4>
+                        <Badge className="bg-violet-100 text-violet-700 border border-violet-200">AI Inferred</Badge>
                       </div>
                       
                       <div className="space-y-3">
@@ -453,12 +441,12 @@ export function ArchaeologistView() {
                               <p className="text-xs text-slate-500 uppercase tracking-wide">{field.label}</p>
                               <p className={cn(
                                 "font-medium",
-                                field.highlight ? "text-amber-700 bg-yellow-200 px-1 rounded inline" : "text-slate-900"
+                                field.highlight ? "text-amber-700 bg-amber-100 px-1 rounded inline" : "text-slate-800"
                               )}>
                                 {field.value}
                               </p>
                             </div>
-                            <Badge variant="secondary" className="bg-emerald-100 text-emerald-700">
+                            <Badge className="bg-emerald-100 text-emerald-700 border border-emerald-200">
                               {field.confidence}%
                             </Badge>
                           </div>
@@ -467,13 +455,13 @@ export function ArchaeologistView() {
 
                       <div className="flex gap-3 pt-4">
                         <Button 
-                          className="flex-1 bg-cfa-accent hover:bg-cfa-accent/90"
+                          className="flex-1 bg-teal-600 hover:bg-teal-700 text-white"
                           onClick={() => handleApproveAndIndex(selectedFile)}
                         >
                           <CheckCircle2 className="w-4 h-4 mr-2" />
                           Approve & Index
                         </Button>
-                        <Button variant="outline" className="flex-1">
+                        <Button variant="outline" className="flex-1 border-slate-200 text-slate-700">
                           Edit Fields
                         </Button>
                       </div>
@@ -486,10 +474,10 @@ export function ArchaeologistView() {
 
           {/* Documents Library Tab */}
           <TabsContent value="documents">
-            <Card className="shadow-sm">
-              <CardHeader>
+            <Card className="bg-white border border-slate-200 shadow-sm">
+              <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">Document Library</CardTitle>
+                  <CardTitle className="text-base font-semibold text-slate-800">Document Library</CardTitle>
                   <div className="flex items-center gap-3">
                     <div className="relative w-64">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -497,11 +485,11 @@ export function ArchaeologistView() {
                         placeholder="Search documents..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-10"
+                        className="pl-10 bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400"
                       />
                     </div>
                     <Select value={documentFilter} onValueChange={setDocumentFilter}>
-                      <SelectTrigger className="w-36">
+                      <SelectTrigger className="w-36 bg-white border-slate-200 text-slate-700">
                         <SelectValue placeholder="All Statuses" />
                       </SelectTrigger>
                       <SelectContent>
@@ -517,10 +505,10 @@ export function ArchaeologistView() {
               </CardHeader>
               <CardContent>
                 {filteredDocuments.length === 0 ? (
-                  <div className="text-center py-12 text-slate-500">
-                    <FileText className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                    <p>No documents found</p>
-                    <p className="text-sm">Upload documents to get started</p>
+                  <div className="text-center py-12">
+                    <FileText className="w-12 h-12 mx-auto mb-4 text-slate-300" />
+                    <p className="font-medium text-slate-700">No documents found</p>
+                    <p className="text-sm text-slate-500">Upload documents to get started</p>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
@@ -532,7 +520,7 @@ export function ArchaeologistView() {
                           <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Uploaded</th>
                           <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Chemicals</th>
                           <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Status</th>
-                          <th className="py-3 px-4"></th>
+                          <th className="py-3 px-4 w-10"></th>
                         </tr>
                       </thead>
                       <tbody>
@@ -545,40 +533,39 @@ export function ArchaeologistView() {
                               key={doc.id}
                               className={cn(
                                 "border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors",
-                                index % 2 === 0 ? "bg-white" : "bg-slate-50/50"
+                                index % 2 === 1 && "bg-slate-50/50"
                               )}
-                              onClick={() => setSelectedDocument(doc)}
                             >
-                              <td className="py-4 px-4">
+                              <td className="py-3 px-4">
                                 <div className="flex items-center gap-3">
                                   <FileText className="w-5 h-5 text-slate-400" />
                                   <div>
-                                    <p className="font-medium text-slate-900 text-sm">{doc.name}</p>
+                                    <p className="font-medium text-slate-800 text-sm">{doc.name}</p>
                                     <p className="text-xs text-slate-500">{formatFileSize(doc.size)}</p>
                                   </div>
                                 </div>
                               </td>
-                              <td className="py-4 px-4">
+                              <td className="py-3 px-4">
                                 <div className="flex items-center gap-2 text-sm text-slate-600">
-                                  <SourceIcon className="w-4 h-4" />
+                                  <SourceIcon className="w-4 h-4 text-slate-400" />
                                   <span className="capitalize">{doc.source}</span>
                                 </div>
                               </td>
-                              <td className="py-4 px-4 text-sm text-slate-600">
+                              <td className="py-3 px-4 text-sm text-slate-600">
                                 {formatDate(doc.uploadedAt)}
                               </td>
-                              <td className="py-4 px-4">
-                                <Badge variant="secondary">
+                              <td className="py-3 px-4">
+                                <Badge variant="outline" className="border-slate-200 text-slate-600">
                                   {doc.extractedChemicals} found
                                 </Badge>
                               </td>
-                              <td className="py-4 px-4">
-                                <Badge className={cn(status.bg, status.text, `hover:${status.bg}`)}>
+                              <td className="py-3 px-4">
+                                <Badge className={cn("border", status.className)}>
                                   {status.label}
                                 </Badge>
                               </td>
-                              <td className="py-4 px-4">
-                                <Button variant="ghost" size="sm">
+                              <td className="py-3 px-4">
+                                <Button variant="ghost" size="sm" className="text-slate-400 hover:text-slate-600">
                                   <ChevronRight className="w-4 h-4" />
                                 </Button>
                               </td>
