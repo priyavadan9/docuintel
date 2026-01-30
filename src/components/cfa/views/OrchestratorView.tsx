@@ -12,7 +12,10 @@ import {
   ChevronRight,
   Loader2,
   FileText,
-  User
+  User,
+  MessageSquare,
+  ExternalLink,
+  Filter
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,6 +30,15 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 export function OrchestratorView() {
   const { 
@@ -37,10 +49,15 @@ export function OrchestratorView() {
     rfiModalOpen,
     setRfiModalOpen,
     currentRfiTask,
-    setCurrentRfiTask
+    setCurrentRfiTask,
+    chemicalRecords,
+    setSelectedChemical,
+    setInvestigationDrawerOpen,
+    setCurrentView
   } = useCFA();
   
   const [sending, setSending] = useState(false);
+  const [activityFilter, setActivityFilter] = useState("all");
   const [emailDraft, setEmailDraft] = useState({
     to: "",
     subject: "",
@@ -96,11 +113,30 @@ Chemical Manufacturing Corp.`
       action: "RFI Sent",
       user: "John Smith",
       details: `RFI sent to ${currentRfiTask.supplier} regarding ${currentRfiTask.productName}. Drafted by AI Agent.`,
-      type: "rfi"
+      type: "rfi",
+      relatedId: currentRfiTask.id,
+      relatedType: "rfi"
+    });
+    
+    toast.success("RFI sent successfully", {
+      description: `Email sent to ${emailDraft.to}`
     });
     
     setSending(false);
     setRfiModalOpen(false);
+  };
+
+  const handleActivityClick = (entry: typeof auditLog[0]) => {
+    if (entry.relatedType === "chemical" && entry.relatedId) {
+      const chemical = chemicalRecords.find(c => c.id === entry.relatedId);
+      if (chemical) {
+        setSelectedChemical(chemical);
+        setInvestigationDrawerOpen(true);
+        setCurrentView("detective");
+      }
+    } else if (entry.relatedType === "document") {
+      setCurrentView("archaeologist");
+    }
   };
 
   const getTaskStatusBadge = (status: string) => {
@@ -108,7 +144,7 @@ Chemical Manufacturing Corp.`
       case "pending": return { bg: "bg-amber-100", text: "text-amber-700", label: "Pending", icon: Clock };
       case "drafted": return { bg: "bg-blue-100", text: "text-blue-700", label: "Drafted", icon: Edit };
       case "sent": return { bg: "bg-emerald-100", text: "text-emerald-700", label: "Sent", icon: Send };
-      case "responded": return { bg: "bg-violet-100", text: "text-violet-700", label: "Response Received", icon: CheckCircle2 };
+      case "responded": return { bg: "bg-violet-100", text: "text-violet-700", label: "Response Received", icon: MessageSquare };
       default: return { bg: "bg-slate-100", text: "text-slate-700", label: status, icon: AlertCircle };
     }
   };
@@ -131,6 +167,11 @@ Chemical Manufacturing Corp.`
 
   const pendingTasks = rfiTasks.filter(t => t.status === "pending" || t.status === "drafted");
   const completedTasks = rfiTasks.filter(t => t.status === "sent" || t.status === "responded");
+  
+  const filteredAuditLog = auditLog.filter(entry => {
+    if (activityFilter === "all") return true;
+    return entry.type === activityFilter;
+  });
 
   return (
     <div className="p-6 bg-slate-50 min-h-full">
@@ -148,7 +189,11 @@ Chemical Manufacturing Corp.`
           <TabsList>
             <TabsTrigger value="tasks" className="gap-2">
               <Send className="w-4 h-4" />
-              Task Queue ({pendingTasks.length})
+              Task Queue ({rfiTasks.length})
+            </TabsTrigger>
+            <TabsTrigger value="history" className="gap-2">
+              <Mail className="w-4 h-4" />
+              RFI History ({completedTasks.length})
             </TabsTrigger>
             <TabsTrigger value="audit" className="gap-2">
               <History className="w-4 h-4" />
@@ -164,15 +209,22 @@ Chemical Manufacturing Corp.`
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Clock className="w-5 h-5 text-amber-500" />
-                    Pending Actions
+                    Pending Actions ({pendingTasks.length})
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {pendingTasks.length === 0 ? (
                     <div className="text-center py-8 text-slate-500">
                       <CheckCircle2 className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                      <p>No pending actions</p>
+                      <p className="font-medium">No pending actions</p>
                       <p className="text-sm">Use The Detective to identify gaps</p>
+                      <Button 
+                        variant="link" 
+                        className="mt-2"
+                        onClick={() => setCurrentView("detective")}
+                      >
+                        Go to Detective <ChevronRight className="w-4 h-4 ml-1" />
+                      </Button>
                     </div>
                   ) : (
                     <div className="space-y-3">
@@ -190,7 +242,7 @@ Chemical Manufacturing Corp.`
                                 <h4 className="font-medium text-slate-900">{task.productName}</h4>
                                 <p className="text-sm text-slate-500">CAS: {task.casNumber}</p>
                               </div>
-                              <Badge className={`${status.bg} ${status.text}`}>
+                              <Badge className={cn(status.bg, status.text)}>
                                 <StatusIcon className="w-3 h-3 mr-1" />
                                 {status.label}
                               </Badge>
@@ -218,65 +270,135 @@ Chemical Manufacturing Corp.`
                 </CardContent>
               </Card>
 
-              {/* Completed Actions */}
+              {/* Quick Stats */}
               <Card className="shadow-sm">
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                    Completed Actions
+                    <Workflow className="w-5 h-5 text-cfa-accent" />
+                    RFI Overview
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {completedTasks.length === 0 ? (
-                    <div className="text-center py-8 text-slate-500">
-                      <Send className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                      <p>No completed actions yet</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                      <p className="text-2xl font-bold text-amber-700">{pendingTasks.length}</p>
+                      <p className="text-sm text-amber-600">Pending</p>
                     </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {completedTasks.map(task => {
-                        const status = getTaskStatusBadge(task.status);
-                        const StatusIcon = status.icon;
-                        
-                        return (
-                          <div 
-                            key={task.id}
-                            className="p-4 border border-slate-200 rounded-lg bg-slate-50"
-                          >
-                            <div className="flex items-start justify-between mb-2">
-                              <div>
-                                <h4 className="font-medium text-slate-900">{task.productName}</h4>
-                                <p className="text-sm text-slate-500">CAS: {task.casNumber}</p>
-                              </div>
-                              <Badge className={`${status.bg} ${status.text}`}>
-                                <StatusIcon className="w-3 h-3 mr-1" />
-                                {status.label}
-                              </Badge>
-                            </div>
-                            
-                            {task.sentAt && (
-                              <p className="text-xs text-slate-400 mt-2">
-                                Sent: {formatDate(task.sentAt)} at {formatTime(task.sentAt)}
-                              </p>
-                            )}
-                          </div>
-                        );
-                      })}
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+                      <p className="text-2xl font-bold text-emerald-700">
+                        {rfiTasks.filter(t => t.status === "sent").length}
+                      </p>
+                      <p className="text-sm text-emerald-600">Sent</p>
                     </div>
-                  )}
+                    <div className="bg-violet-50 border border-violet-200 rounded-lg p-4">
+                      <p className="text-2xl font-bold text-violet-700">
+                        {rfiTasks.filter(t => t.status === "responded").length}
+                      </p>
+                      <p className="text-sm text-violet-600">Responses</p>
+                    </div>
+                    <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
+                      <p className="text-2xl font-bold text-slate-700">{rfiTasks.length}</p>
+                      <p className="text-sm text-slate-600">Total RFIs</p>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </div>
           </TabsContent>
 
+          {/* RFI History */}
+          <TabsContent value="history">
+            <Card className="shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Mail className="w-5 h-5 text-cfa-accent" />
+                  RFI History
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {completedTasks.length === 0 ? (
+                  <div className="text-center py-8 text-slate-500">
+                    <Send className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                    <p className="font-medium">No RFIs sent yet</p>
+                    <p className="text-sm">Execute pending actions to send RFIs</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-slate-200 bg-slate-50">
+                          <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Product</th>
+                          <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">CAS Number</th>
+                          <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Supplier</th>
+                          <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Sent Date</th>
+                          <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Status</th>
+                          <th className="py-3 px-4"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {completedTasks.map((task, index) => {
+                          const status = getTaskStatusBadge(task.status);
+                          const StatusIcon = status.icon;
+                          
+                          return (
+                            <tr 
+                              key={task.id}
+                              className={cn(
+                                "border-b border-slate-100 hover:bg-slate-50 transition-colors",
+                                index % 2 === 0 ? "bg-white" : "bg-slate-50/50"
+                              )}
+                            >
+                              <td className="py-4 px-4 font-medium text-slate-900">{task.productName}</td>
+                              <td className="py-4 px-4">
+                                <code className="text-sm bg-slate-100 px-2 py-0.5 rounded">{task.casNumber}</code>
+                              </td>
+                              <td className="py-4 px-4 text-slate-600">{task.supplier}</td>
+                              <td className="py-4 px-4 text-slate-600">
+                                {task.sentAt ? formatDate(task.sentAt) : "-"}
+                              </td>
+                              <td className="py-4 px-4">
+                                <Badge className={cn(status.bg, status.text)}>
+                                  <StatusIcon className="w-3 h-3 mr-1" />
+                                  {status.label}
+                                </Badge>
+                              </td>
+                              <td className="py-4 px-4">
+                                <Button variant="ghost" size="sm">
+                                  <ExternalLink className="w-4 h-4" />
+                                </Button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* Audit Log */}
           <TabsContent value="audit">
             <Card className="shadow-sm">
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <History className="w-5 h-5 text-cfa-accent" />
                   Compliance Audit Trail
                 </CardTitle>
+                <Select value={activityFilter} onValueChange={setActivityFilter}>
+                  <SelectTrigger className="w-44">
+                    <Filter className="w-4 h-4 mr-2" />
+                    <SelectValue placeholder="Filter" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Activities</SelectItem>
+                    <SelectItem value="upload">Documents</SelectItem>
+                    <SelectItem value="extraction">Extractions</SelectItem>
+                    <SelectItem value="rfi">RFIs</SelectItem>
+                    <SelectItem value="verification">Verifications</SelectItem>
+                  </SelectContent>
+                </Select>
               </CardHeader>
               <CardContent>
                 <div className="relative">
@@ -284,7 +406,7 @@ Chemical Manufacturing Corp.`
                   <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-slate-200" />
                   
                   <div className="space-y-6">
-                    {auditLog.map((entry, index) => {
+                    {filteredAuditLog.map((entry) => {
                       const getTypeIcon = () => {
                         switch (entry.type) {
                           case "upload": return FileText;
@@ -306,23 +428,40 @@ Chemical Manufacturing Corp.`
                       };
                       
                       const Icon = getTypeIcon();
+                      const isClickable = !!entry.relatedId;
                       
                       return (
-                        <div key={entry.id} className="relative pl-10">
+                        <button 
+                          key={entry.id} 
+                          className={cn(
+                            "relative pl-10 w-full text-left",
+                            isClickable && "cursor-pointer"
+                          )}
+                          onClick={() => isClickable && handleActivityClick(entry)}
+                          disabled={!isClickable}
+                        >
                           {/* Timeline dot */}
-                          <div className={`absolute left-2 w-5 h-5 rounded-full ${getTypeColor()} flex items-center justify-center`}>
+                          <div className={cn("absolute left-2 w-5 h-5 rounded-full flex items-center justify-center", getTypeColor())}>
                             <Icon className="w-3 h-3 text-white" />
                           </div>
                           
-                          <div className="bg-white border border-slate-200 rounded-lg p-4">
+                          <div className={cn(
+                            "bg-white border border-slate-200 rounded-lg p-4 transition-colors",
+                            isClickable && "hover:border-cfa-accent/50 hover:bg-slate-50"
+                          )}>
                             <div className="flex items-start justify-between mb-2">
                               <div>
                                 <h4 className="font-medium text-slate-900">{entry.action}</h4>
                                 <p className="text-sm text-slate-600 mt-1">{entry.details}</p>
                               </div>
-                              <Badge variant="secondary" className="shrink-0">
-                                {entry.type}
-                              </Badge>
+                              <div className="flex items-center gap-2">
+                                <Badge variant="secondary" className="shrink-0">
+                                  {entry.type}
+                                </Badge>
+                                {isClickable && (
+                                  <ExternalLink className="w-4 h-4 text-cfa-accent" />
+                                )}
+                              </div>
                             </div>
                             
                             <div className="flex items-center gap-4 mt-3 text-xs text-slate-500">
@@ -336,7 +475,7 @@ Chemical Manufacturing Corp.`
                               </div>
                             </div>
                           </div>
-                        </div>
+                        </button>
                       );
                     })}
                   </div>
