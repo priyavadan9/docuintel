@@ -57,9 +57,6 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
-        success: "hsl(var(--success))",
-        warning: "hsl(var(--warning))",
-        info: "hsl(var(--info))",
         // CFA Platform colors
         cfa: {
           sidebar: "hsl(var(--cfa-sidebar))",
@@ -68,6 +65,29 @@ export default {
           text: "hsl(var(--cfa-text))",
           muted: "hsl(var(--cfa-muted))",
           accent: "hsl(var(--cfa-accent))",
+        },
+        // Status colors for consistent usage
+        status: {
+          success: "hsl(var(--status-success))",
+          "success-bg": "hsl(var(--status-success-bg))",
+          "success-text": "hsl(var(--status-success-text))",
+          warning: "hsl(var(--status-warning))",
+          "warning-bg": "hsl(var(--status-warning-bg))",
+          "warning-text": "hsl(var(--status-warning-text))",
+          error: "hsl(var(--status-error))",
+          "error-bg": "hsl(var(--status-error-bg))",
+          "error-text": "hsl(var(--status-error-text))",
+          info: "hsl(var(--status-info))",
+          "info-bg": "hsl(var(--status-info-bg))",
+          "info-text": "hsl(var(--status-info-text))",
+        },
+        // Chart colors
+        chart: {
+          primary: "hsl(var(--chart-primary))",
+          secondary: "hsl(var(--chart-secondary))",
+          danger: "hsl(var(--chart-danger))",
+          warning: "hsl(var(--chart-warning))",
+          success: "hsl(var(--chart-success))",
         },
       },
       borderRadius: {

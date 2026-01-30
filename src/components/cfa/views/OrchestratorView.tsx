@@ -67,7 +67,6 @@ export function OrchestratorView() {
   const openRfiModal = (task: RFITask) => {
     setCurrentRfiTask(task);
     
-    // Generate email draft
     const successorDomain = task.supplier.toLowerCase().replace(/\s+/g, "-") + "-successor.com";
     setEmailDraft({
       to: `compliance@${successorDomain}`,
@@ -99,8 +98,6 @@ Chemical Manufacturing Corp.`
     if (!currentRfiTask) return;
     
     setSending(true);
-    
-    // Simulate sending
     await new Promise(resolve => setTimeout(resolve, 2000));
     
     setRfiTasks(prev => prev.map(t => 
@@ -141,11 +138,11 @@ Chemical Manufacturing Corp.`
 
   const getTaskStatusBadge = (status: string) => {
     switch (status) {
-      case "pending": return { bg: "bg-amber-100", text: "text-amber-700", label: "Pending", icon: Clock };
-      case "drafted": return { bg: "bg-blue-100", text: "text-blue-700", label: "Drafted", icon: Edit };
-      case "sent": return { bg: "bg-emerald-100", text: "text-emerald-700", label: "Sent", icon: Send };
-      case "responded": return { bg: "bg-violet-100", text: "text-violet-700", label: "Response Received", icon: MessageSquare };
-      default: return { bg: "bg-slate-100", text: "text-slate-700", label: status, icon: AlertCircle };
+      case "pending": return { className: "bg-amber-100 text-amber-700 border-amber-200", label: "Pending", icon: Clock };
+      case "drafted": return { className: "bg-blue-100 text-blue-700 border-blue-200", label: "Drafted", icon: Edit };
+      case "sent": return { className: "bg-emerald-100 text-emerald-700 border-emerald-200", label: "Sent", icon: Send };
+      case "responded": return { className: "bg-violet-100 text-violet-700 border-violet-200", label: "Response Received", icon: MessageSquare };
+      default: return { className: "bg-slate-100 text-slate-700 border-slate-200", label: status, icon: AlertCircle };
     }
   };
 
@@ -179,23 +176,23 @@ Chemical Manufacturing Corp.`
         {/* Header */}
         <div>
           <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <Workflow className="w-6 h-6 text-cfa-accent" />
+            <Workflow className="w-6 h-6 text-teal-600" />
             The Orchestrator
           </h2>
           <p className="text-slate-500 mt-1">Manage supplier outreach, RFI generation, and compliance actions</p>
         </div>
 
         <Tabs defaultValue="tasks" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="tasks" className="gap-2">
+          <TabsList className="bg-white border border-slate-200">
+            <TabsTrigger value="tasks" className="gap-2 data-[state=active]:bg-teal-50 data-[state=active]:text-teal-700">
               <Send className="w-4 h-4" />
               Task Queue ({rfiTasks.length})
             </TabsTrigger>
-            <TabsTrigger value="history" className="gap-2">
+            <TabsTrigger value="history" className="gap-2 data-[state=active]:bg-teal-50 data-[state=active]:text-teal-700">
               <Mail className="w-4 h-4" />
               RFI History ({completedTasks.length})
             </TabsTrigger>
-            <TabsTrigger value="audit" className="gap-2">
+            <TabsTrigger value="audit" className="gap-2 data-[state=active]:bg-teal-50 data-[state=active]:text-teal-700">
               <History className="w-4 h-4" />
               Audit Log
             </TabsTrigger>
@@ -205,22 +202,22 @@ Chemical Manufacturing Corp.`
           <TabsContent value="tasks" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Pending Actions */}
-              <Card className="shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Clock className="w-5 h-5 text-amber-500" />
+              <Card className="bg-white border border-slate-200 shadow-sm">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base font-semibold text-slate-800 flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-amber-500" />
                     Pending Actions ({pendingTasks.length})
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {pendingTasks.length === 0 ? (
-                    <div className="text-center py-8 text-slate-500">
-                      <CheckCircle2 className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                      <p className="font-medium">No pending actions</p>
-                      <p className="text-sm">Use The Detective to identify gaps</p>
+                    <div className="text-center py-8">
+                      <CheckCircle2 className="w-12 h-12 mx-auto mb-4 text-slate-300" />
+                      <p className="font-medium text-slate-700">No pending actions</p>
+                      <p className="text-sm text-slate-500 mt-1">Use The Detective to identify gaps</p>
                       <Button 
                         variant="link" 
-                        className="mt-2"
+                        className="mt-2 text-teal-600"
                         onClick={() => setCurrentView("detective")}
                       >
                         Go to Detective <ChevronRight className="w-4 h-4 ml-1" />
@@ -235,14 +232,14 @@ Chemical Manufacturing Corp.`
                         return (
                           <div 
                             key={task.id}
-                            className="p-4 border border-slate-200 rounded-lg bg-white hover:border-cfa-accent/50 transition-colors"
+                            className="p-4 border border-slate-200 rounded-lg bg-white hover:border-teal-300 transition-colors"
                           >
                             <div className="flex items-start justify-between mb-3">
                               <div>
-                                <h4 className="font-medium text-slate-900">{task.productName}</h4>
+                                <h4 className="font-medium text-slate-800">{task.productName}</h4>
                                 <p className="text-sm text-slate-500">CAS: {task.casNumber}</p>
                               </div>
-                              <Badge className={cn(status.bg, status.text)}>
+                              <Badge className={cn("border", status.className)}>
                                 <StatusIcon className="w-3 h-3 mr-1" />
                                 {status.label}
                               </Badge>
@@ -255,7 +252,7 @@ Chemical Manufacturing Corp.`
                               </div>
                               <Button 
                                 size="sm" 
-                                className="bg-cfa-accent hover:bg-cfa-accent/90"
+                                className="bg-teal-600 hover:bg-teal-700 text-white"
                                 onClick={() => openRfiModal(task)}
                               >
                                 Execute Action
@@ -271,10 +268,10 @@ Chemical Manufacturing Corp.`
               </Card>
 
               {/* Quick Stats */}
-              <Card className="shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Workflow className="w-5 h-5 text-cfa-accent" />
+              <Card className="bg-white border border-slate-200 shadow-sm">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base font-semibold text-slate-800 flex items-center gap-2">
+                    <Workflow className="w-4 h-4 text-teal-600" />
                     RFI Overview
                   </CardTitle>
                 </CardHeader>
@@ -282,23 +279,23 @@ Chemical Manufacturing Corp.`
                   <div className="grid grid-cols-2 gap-4">
                     <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
                       <p className="text-2xl font-bold text-amber-700">{pendingTasks.length}</p>
-                      <p className="text-sm text-amber-600">Pending</p>
+                      <p className="text-sm text-amber-600 font-medium">Pending</p>
                     </div>
                     <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
                       <p className="text-2xl font-bold text-emerald-700">
                         {rfiTasks.filter(t => t.status === "sent").length}
                       </p>
-                      <p className="text-sm text-emerald-600">Sent</p>
+                      <p className="text-sm text-emerald-600 font-medium">Sent</p>
                     </div>
                     <div className="bg-violet-50 border border-violet-200 rounded-lg p-4">
                       <p className="text-2xl font-bold text-violet-700">
                         {rfiTasks.filter(t => t.status === "responded").length}
                       </p>
-                      <p className="text-sm text-violet-600">Responses</p>
+                      <p className="text-sm text-violet-600 font-medium">Responses</p>
                     </div>
                     <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
                       <p className="text-2xl font-bold text-slate-700">{rfiTasks.length}</p>
-                      <p className="text-sm text-slate-600">Total RFIs</p>
+                      <p className="text-sm text-slate-600 font-medium">Total RFIs</p>
                     </div>
                   </div>
                 </CardContent>
@@ -308,19 +305,19 @@ Chemical Manufacturing Corp.`
 
           {/* RFI History */}
           <TabsContent value="history">
-            <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Mail className="w-5 h-5 text-cfa-accent" />
+            <Card className="bg-white border border-slate-200 shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base font-semibold text-slate-800 flex items-center gap-2">
+                  <Mail className="w-4 h-4 text-teal-600" />
                   RFI History
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {completedTasks.length === 0 ? (
-                  <div className="text-center py-8 text-slate-500">
-                    <Send className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                    <p className="font-medium">No RFIs sent yet</p>
-                    <p className="text-sm">Execute pending actions to send RFIs</p>
+                  <div className="text-center py-8">
+                    <Send className="w-12 h-12 mx-auto mb-4 text-slate-300" />
+                    <p className="font-medium text-slate-700">No RFIs sent yet</p>
+                    <p className="text-sm text-slate-500 mt-1">Execute pending actions to send RFIs</p>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
@@ -332,7 +329,7 @@ Chemical Manufacturing Corp.`
                           <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Supplier</th>
                           <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Sent Date</th>
                           <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Status</th>
-                          <th className="py-3 px-4"></th>
+                          <th className="py-3 px-4 w-10"></th>
                         </tr>
                       </thead>
                       <tbody>
@@ -345,25 +342,25 @@ Chemical Manufacturing Corp.`
                               key={task.id}
                               className={cn(
                                 "border-b border-slate-100 hover:bg-slate-50 transition-colors",
-                                index % 2 === 0 ? "bg-white" : "bg-slate-50/50"
+                                index % 2 === 1 && "bg-slate-50/50"
                               )}
                             >
-                              <td className="py-4 px-4 font-medium text-slate-900">{task.productName}</td>
-                              <td className="py-4 px-4">
-                                <code className="text-sm bg-slate-100 px-2 py-0.5 rounded">{task.casNumber}</code>
+                              <td className="py-3 px-4 font-medium text-slate-800">{task.productName}</td>
+                              <td className="py-3 px-4">
+                                <code className="text-sm bg-slate-100 text-slate-700 px-2 py-0.5 rounded">{task.casNumber}</code>
                               </td>
-                              <td className="py-4 px-4 text-slate-600">{task.supplier}</td>
-                              <td className="py-4 px-4 text-slate-600">
+                              <td className="py-3 px-4 text-slate-600">{task.supplier}</td>
+                              <td className="py-3 px-4 text-slate-600">
                                 {task.sentAt ? formatDate(task.sentAt) : "-"}
                               </td>
-                              <td className="py-4 px-4">
-                                <Badge className={cn(status.bg, status.text)}>
+                              <td className="py-3 px-4">
+                                <Badge className={cn("border", status.className)}>
                                   <StatusIcon className="w-3 h-3 mr-1" />
                                   {status.label}
                                 </Badge>
                               </td>
-                              <td className="py-4 px-4">
-                                <Button variant="ghost" size="sm">
+                              <td className="py-3 px-4">
+                                <Button variant="ghost" size="sm" className="text-slate-600 hover:text-slate-900">
                                   <ExternalLink className="w-4 h-4" />
                                 </Button>
                               </td>
@@ -380,14 +377,14 @@ Chemical Manufacturing Corp.`
 
           {/* Audit Log */}
           <TabsContent value="audit">
-            <Card className="shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <History className="w-5 h-5 text-cfa-accent" />
+            <Card className="bg-white border border-slate-200 shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-base font-semibold text-slate-800 flex items-center gap-2">
+                  <History className="w-4 h-4 text-teal-600" />
                   Compliance Audit Trail
                 </CardTitle>
                 <Select value={activityFilter} onValueChange={setActivityFilter}>
-                  <SelectTrigger className="w-44">
+                  <SelectTrigger className="w-44 bg-white border-slate-200 text-slate-700">
                     <Filter className="w-4 h-4 mr-2" />
                     <SelectValue placeholder="Filter" />
                   </SelectTrigger>
@@ -402,10 +399,9 @@ Chemical Manufacturing Corp.`
               </CardHeader>
               <CardContent>
                 <div className="relative">
-                  {/* Timeline line */}
                   <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-slate-200" />
                   
-                  <div className="space-y-6">
+                  <div className="space-y-4">
                     {filteredAuditLog.map((entry) => {
                       const getTypeIcon = () => {
                         switch (entry.type) {
@@ -440,26 +436,25 @@ Chemical Manufacturing Corp.`
                           onClick={() => isClickable && handleActivityClick(entry)}
                           disabled={!isClickable}
                         >
-                          {/* Timeline dot */}
                           <div className={cn("absolute left-2 w-5 h-5 rounded-full flex items-center justify-center", getTypeColor())}>
                             <Icon className="w-3 h-3 text-white" />
                           </div>
                           
                           <div className={cn(
                             "bg-white border border-slate-200 rounded-lg p-4 transition-colors",
-                            isClickable && "hover:border-cfa-accent/50 hover:bg-slate-50"
+                            isClickable && "hover:border-teal-300 hover:bg-slate-50"
                           )}>
                             <div className="flex items-start justify-between mb-2">
                               <div>
-                                <h4 className="font-medium text-slate-900">{entry.action}</h4>
+                                <h4 className="font-medium text-slate-800">{entry.action}</h4>
                                 <p className="text-sm text-slate-600 mt-1">{entry.details}</p>
                               </div>
                               <div className="flex items-center gap-2">
-                                <Badge variant="secondary" className="shrink-0">
+                                <Badge variant="outline" className="shrink-0 border-slate-200 text-slate-600">
                                   {entry.type}
                                 </Badge>
                                 {isClickable && (
-                                  <ExternalLink className="w-4 h-4 text-cfa-accent" />
+                                  <ExternalLink className="w-4 h-4 text-teal-500" />
                                 )}
                               </div>
                             </div>
@@ -487,16 +482,16 @@ Chemical Manufacturing Corp.`
 
         {/* RFI Modal */}
         <Dialog open={rfiModalOpen} onOpenChange={setRfiModalOpen}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl bg-white">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Mail className="w-5 h-5 text-cfa-accent" />
+              <DialogTitle className="flex items-center gap-2 text-slate-900">
+                <Mail className="w-5 h-5 text-teal-600" />
                 Drafting Supplier RFI
               </DialogTitle>
             </DialogHeader>
             
             <div className="space-y-4 py-4">
-              <div className="flex items-center gap-2 text-sm text-violet-600 bg-violet-50 px-3 py-2 rounded-lg">
+              <div className="flex items-center gap-2 text-sm text-violet-700 bg-violet-50 border border-violet-200 px-3 py-2 rounded-lg">
                 <Workflow className="w-4 h-4" />
                 <span>Agent has autonomously identified the successor domain for this supplier</span>
               </div>
@@ -507,6 +502,7 @@ Chemical Manufacturing Corp.`
                   <Input 
                     value={emailDraft.to}
                     onChange={(e) => setEmailDraft(prev => ({ ...prev, to: e.target.value }))}
+                    className="bg-white border-slate-200 text-slate-900"
                   />
                 </div>
                 
@@ -515,6 +511,7 @@ Chemical Manufacturing Corp.`
                   <Input 
                     value={emailDraft.subject}
                     onChange={(e) => setEmailDraft(prev => ({ ...prev, subject: e.target.value }))}
+                    className="bg-white border-slate-200 text-slate-900"
                   />
                 </div>
                 
@@ -524,19 +521,19 @@ Chemical Manufacturing Corp.`
                     value={emailDraft.body}
                     onChange={(e) => setEmailDraft(prev => ({ ...prev, body: e.target.value }))}
                     rows={12}
-                    className="font-mono text-sm"
+                    className="font-mono text-sm bg-white border-slate-200 text-slate-900"
                   />
                 </div>
               </div>
             </div>
             
             <DialogFooter className="gap-2">
-              <Button variant="outline" onClick={() => setRfiModalOpen(false)}>
+              <Button variant="outline" onClick={() => setRfiModalOpen(false)} className="border-slate-200 text-slate-700">
                 <Edit className="w-4 h-4 mr-2" />
                 Edit Draft
               </Button>
               <Button 
-                className="bg-cfa-accent hover:bg-cfa-accent/90"
+                className="bg-teal-600 hover:bg-teal-700 text-white"
                 onClick={handleSendRfi}
                 disabled={sending}
               >
