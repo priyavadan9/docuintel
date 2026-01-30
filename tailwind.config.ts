@@ -60,6 +60,15 @@ export default {
         success: "hsl(var(--success))",
         warning: "hsl(var(--warning))",
         info: "hsl(var(--info))",
+        // CFA Platform colors
+        cfa: {
+          sidebar: "hsl(var(--cfa-sidebar))",
+          border: "hsl(var(--cfa-border))",
+          hover: "hsl(var(--cfa-hover))",
+          text: "hsl(var(--cfa-text))",
+          muted: "hsl(var(--cfa-muted))",
+          accent: "hsl(var(--cfa-accent))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

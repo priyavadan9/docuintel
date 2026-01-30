@@ -59,6 +59,14 @@
     --success: 142 76% 46%;
     --warning: 38 92% 50%;
     --info: 199 89% 48%;
+
+    /* CFA Platform Colors */
+    --cfa-sidebar: 222 47% 11%;
+    --cfa-border: 217 33% 20%;
+    --cfa-hover: 217 33% 18%;
+    --cfa-text: 210 40% 92%;
+    --cfa-muted: 215 16% 55%;
+    --cfa-accent: 173 58% 39%;
   }
 
   .light {

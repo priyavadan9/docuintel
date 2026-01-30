@@ -1,0 +1,422 @@
+import { useState } from "react";
+import { useCFA, RFITask } from "@/contexts/CFAContext";
+import { 
+  Workflow,
+  Send,
+  Clock,
+  CheckCircle2,
+  Mail,
+  Edit,
+  AlertCircle,
+  History,
+  ChevronRight,
+  Loader2,
+  FileText,
+  User
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+
+export function OrchestratorView() {
+  const { 
+    rfiTasks, 
+    setRfiTasks, 
+    auditLog, 
+    addAuditEntry,
+    rfiModalOpen,
+    setRfiModalOpen,
+    currentRfiTask,
+    setCurrentRfiTask
+  } = useCFA();
+  
+  const [sending, setSending] = useState(false);
+  const [emailDraft, setEmailDraft] = useState({
+    to: "",
+    subject: "",
+    body: ""
+  });
+
+  const openRfiModal = (task: RFITask) => {
+    setCurrentRfiTask(task);
+    
+    // Generate email draft
+    const successorDomain = task.supplier.toLowerCase().replace(/\s+/g, "-") + "-successor.com";
+    setEmailDraft({
+      to: `compliance@${successorDomain}`,
+      subject: `URGENT: EPA TSCA Data Request regarding 2014 Purchase`,
+      body: `Dear Compliance Team,
+
+Our records indicate a purchase of ${task.productName} (CAS: ${task.casNumber}) from your organization in 2014.
+
+Under EPA TSCA Section 8(a)(7) reporting requirements for PFAS substances, we are required to obtain complete documentation including:
+
+• Concentration percentages for all PFAS-containing materials
+• Current Safety Data Sheets (SDS)
+• Any successor product information if applicable
+
+We kindly request your assistance in providing this information at your earliest convenience. The EPA submission deadline is October 13, 2026.
+
+Please respond to this email or contact our compliance team directly.
+
+Best regards,
+John Smith
+Compliance Officer
+Chemical Manufacturing Corp.`
+    });
+    
+    setRfiModalOpen(true);
+  };
+
+  const handleSendRfi = async () => {
+    if (!currentRfiTask) return;
+    
+    setSending(true);
+    
+    // Simulate sending
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    setRfiTasks(prev => prev.map(t => 
+      t.id === currentRfiTask.id 
+        ? { ...t, status: "sent", sentAt: new Date() } 
+        : t
+    ));
+    
+    addAuditEntry({
+      action: "RFI Sent",
+      user: "John Smith",
+      details: `RFI sent to ${currentRfiTask.supplier} regarding ${currentRfiTask.productName}. Drafted by AI Agent.`,
+      type: "rfi"
+    });
+    
+    setSending(false);
+    setRfiModalOpen(false);
+  };
+
+  const getTaskStatusBadge = (status: string) => {
+    switch (status) {
+      case "pending": return { bg: "bg-amber-100", text: "text-amber-700", label: "Pending", icon: Clock };
+      case "drafted": return { bg: "bg-blue-100", text: "text-blue-700", label: "Drafted", icon: Edit };
+      case "sent": return { bg: "bg-emerald-100", text: "text-emerald-700", label: "Sent", icon: Send };
+      case "responded": return { bg: "bg-violet-100", text: "text-violet-700", label: "Response Received", icon: CheckCircle2 };
+      default: return { bg: "bg-slate-100", text: "text-slate-700", label: status, icon: AlertCircle };
+    }
+  };
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString("en-US", { 
+      hour: "numeric", 
+      minute: "2-digit",
+      hour12: true 
+    });
+  };
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString("en-US", { 
+      month: "short", 
+      day: "numeric",
+      year: "numeric"
+    });
+  };
+
+  const pendingTasks = rfiTasks.filter(t => t.status === "pending" || t.status === "drafted");
+  const completedTasks = rfiTasks.filter(t => t.status === "sent" || t.status === "responded");
+
+  return (
+    <div className="p-6 bg-slate-50 min-h-full">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+        <div>
+          <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+            <Workflow className="w-6 h-6 text-cfa-accent" />
+            The Orchestrator
+          </h2>
+          <p className="text-slate-500 mt-1">Manage supplier outreach, RFI generation, and compliance actions</p>
+        </div>
+
+        <Tabs defaultValue="tasks" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="tasks" className="gap-2">
+              <Send className="w-4 h-4" />
+              Task Queue ({pendingTasks.length})
+            </TabsTrigger>
+            <TabsTrigger value="audit" className="gap-2">
+              <History className="w-4 h-4" />
+              Audit Log
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Task Queue */}
+          <TabsContent value="tasks" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Pending Actions */}
+              <Card className="shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Clock className="w-5 h-5 text-amber-500" />
+                    Pending Actions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {pendingTasks.length === 0 ? (
+                    <div className="text-center py-8 text-slate-500">
+                      <CheckCircle2 className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                      <p>No pending actions</p>
+                      <p className="text-sm">Use The Detective to identify gaps</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {pendingTasks.map(task => {
+                        const status = getTaskStatusBadge(task.status);
+                        const StatusIcon = status.icon;
+                        
+                        return (
+                          <div 
+                            key={task.id}
+                            className="p-4 border border-slate-200 rounded-lg bg-white hover:border-cfa-accent/50 transition-colors"
+                          >
+                            <div className="flex items-start justify-between mb-3">
+                              <div>
+                                <h4 className="font-medium text-slate-900">{task.productName}</h4>
+                                <p className="text-sm text-slate-500">CAS: {task.casNumber}</p>
+                              </div>
+                              <Badge className={`${status.bg} ${status.text}`}>
+                                <StatusIcon className="w-3 h-3 mr-1" />
+                                {status.label}
+                              </Badge>
+                            </div>
+                            
+                            <div className="flex items-center justify-between">
+                              <div className="text-sm text-slate-500">
+                                <span>Supplier: </span>
+                                <span className="text-slate-700 font-medium">{task.supplier}</span>
+                              </div>
+                              <Button 
+                                size="sm" 
+                                className="bg-cfa-accent hover:bg-cfa-accent/90"
+                                onClick={() => openRfiModal(task)}
+                              >
+                                Execute Action
+                                <ChevronRight className="w-4 h-4 ml-1" />
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Completed Actions */}
+              <Card className="shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                    Completed Actions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {completedTasks.length === 0 ? (
+                    <div className="text-center py-8 text-slate-500">
+                      <Send className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                      <p>No completed actions yet</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {completedTasks.map(task => {
+                        const status = getTaskStatusBadge(task.status);
+                        const StatusIcon = status.icon;
+                        
+                        return (
+                          <div 
+                            key={task.id}
+                            className="p-4 border border-slate-200 rounded-lg bg-slate-50"
+                          >
+                            <div className="flex items-start justify-between mb-2">
+                              <div>
+                                <h4 className="font-medium text-slate-900">{task.productName}</h4>
+                                <p className="text-sm text-slate-500">CAS: {task.casNumber}</p>
+                              </div>
+                              <Badge className={`${status.bg} ${status.text}`}>
+                                <StatusIcon className="w-3 h-3 mr-1" />
+                                {status.label}
+                              </Badge>
+                            </div>
+                            
+                            {task.sentAt && (
+                              <p className="text-xs text-slate-400 mt-2">
+                                Sent: {formatDate(task.sentAt)} at {formatTime(task.sentAt)}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Audit Log */}
+          <TabsContent value="audit">
+            <Card className="shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <History className="w-5 h-5 text-cfa-accent" />
+                  Compliance Audit Trail
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="relative">
+                  {/* Timeline line */}
+                  <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-slate-200" />
+                  
+                  <div className="space-y-6">
+                    {auditLog.map((entry, index) => {
+                      const getTypeIcon = () => {
+                        switch (entry.type) {
+                          case "upload": return FileText;
+                          case "extraction": return Workflow;
+                          case "rfi": return Send;
+                          case "verification": return CheckCircle2;
+                          default: return AlertCircle;
+                        }
+                      };
+                      
+                      const getTypeColor = () => {
+                        switch (entry.type) {
+                          case "upload": return "bg-blue-500";
+                          case "extraction": return "bg-violet-500";
+                          case "rfi": return "bg-emerald-500";
+                          case "verification": return "bg-teal-500";
+                          default: return "bg-slate-500";
+                        }
+                      };
+                      
+                      const Icon = getTypeIcon();
+                      
+                      return (
+                        <div key={entry.id} className="relative pl-10">
+                          {/* Timeline dot */}
+                          <div className={`absolute left-2 w-5 h-5 rounded-full ${getTypeColor()} flex items-center justify-center`}>
+                            <Icon className="w-3 h-3 text-white" />
+                          </div>
+                          
+                          <div className="bg-white border border-slate-200 rounded-lg p-4">
+                            <div className="flex items-start justify-between mb-2">
+                              <div>
+                                <h4 className="font-medium text-slate-900">{entry.action}</h4>
+                                <p className="text-sm text-slate-600 mt-1">{entry.details}</p>
+                              </div>
+                              <Badge variant="secondary" className="shrink-0">
+                                {entry.type}
+                              </Badge>
+                            </div>
+                            
+                            <div className="flex items-center gap-4 mt-3 text-xs text-slate-500">
+                              <div className="flex items-center gap-1">
+                                <User className="w-3 h-3" />
+                                {entry.user}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                {formatTime(entry.timestamp)} - {formatDate(entry.timestamp)}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+
+        {/* RFI Modal */}
+        <Dialog open={rfiModalOpen} onOpenChange={setRfiModalOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Mail className="w-5 h-5 text-cfa-accent" />
+                Drafting Supplier RFI
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4">
+              <div className="flex items-center gap-2 text-sm text-violet-600 bg-violet-50 px-3 py-2 rounded-lg">
+                <Workflow className="w-4 h-4" />
+                <span>Agent has autonomously identified the successor domain for this supplier</span>
+              </div>
+              
+              <div className="space-y-3">
+                <div>
+                  <label className="text-sm font-medium text-slate-700 mb-1.5 block">To:</label>
+                  <Input 
+                    value={emailDraft.to}
+                    onChange={(e) => setEmailDraft(prev => ({ ...prev, to: e.target.value }))}
+                  />
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium text-slate-700 mb-1.5 block">Subject:</label>
+                  <Input 
+                    value={emailDraft.subject}
+                    onChange={(e) => setEmailDraft(prev => ({ ...prev, subject: e.target.value }))}
+                  />
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium text-slate-700 mb-1.5 block">Message:</label>
+                  <Textarea 
+                    value={emailDraft.body}
+                    onChange={(e) => setEmailDraft(prev => ({ ...prev, body: e.target.value }))}
+                    rows={12}
+                    className="font-mono text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => setRfiModalOpen(false)}>
+                <Edit className="w-4 h-4 mr-2" />
+                Edit Draft
+              </Button>
+              <Button 
+                className="bg-cfa-accent hover:bg-cfa-accent/90"
+                onClick={handleSendRfi}
+                disabled={sending}
+              >
+                {sending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4 mr-2" />
+                    Approve & Send
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </div>
+  );
+}
