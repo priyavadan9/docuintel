@@ -13,7 +13,9 @@ import {
   Cloud,
   Archive,
   ChevronRight,
-  Search
+  Search,
+  CloudCog,
+  FolderOpen
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,6 +32,21 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { CloudFilePicker } from "../CloudFilePicker";
+
+// Source name mapping
+const sourceNames: Record<string, string> = {
+  "google-drive": "Google Drive",
+  dropbox: "Dropbox",
+  onedrive: "OneDrive",
+  box: "Box",
+  sharepoint: "SharePoint",
+  "aws-s3": "AWS S3",
+  upload: "Manual Upload",
+  email: "Email",
+  drive: "Cloud Drive",
+  legacy: "Legacy Archive",
+};
 
 export function ArchaeologistView() {
   const { 
@@ -40,12 +57,18 @@ export function ArchaeologistView() {
     addAuditEntry,
     documents,
     setDocuments,
-    setChemicalRecords
+    setChemicalRecords,
+    cloudProviders,
+    setCurrentView
   } = useCFA();
   
   const [isDragging, setIsDragging] = useState(false);
   const [documentFilter, setDocumentFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [uploadMode, setUploadMode] = useState<"manual" | "cloud">("manual");
+  const [cloudPickerOpen, setCloudPickerOpen] = useState(false);
+
+  const connectedProviders = cloudProviders.filter(p => p.connected);
 
   const simulateProcessing = useCallback((file: UploadedFile) => {
     const stages: ProcessingStatus[] = ["uploading", "ocr", "extracting", "complete"];
@@ -119,10 +142,30 @@ export function ArchaeologistView() {
       name: "2011-2015_Purchase_Orders.pdf",
       size: 2458624,
       status: "uploading",
-      progress: 0
+      progress: 0,
+      source: "upload"
     };
     setUploadedFiles(prev => [...prev, mockFile]);
     simulateProcessing(mockFile);
+  };
+
+  const handleCloudFilesSelected = (files: { name: string; size: number; source: string }[]) => {
+    files.forEach((file, index) => {
+      const newFile: UploadedFile = {
+        id: `file-${Date.now()}-${index}`,
+        name: file.name,
+        size: file.size,
+        status: "uploading",
+        progress: 0,
+        source: file.source as any
+      };
+      setUploadedFiles(prev => [...prev, newFile]);
+      simulateProcessing(newFile);
+    });
+
+    toast.success(`${files.length} file${files.length > 1 ? "s" : ""} added to queue`, {
+      description: "Processing will begin shortly"
+    });
   };
 
   const handleApproveAndIndex = (file: UploadedFile) => {
@@ -263,35 +306,114 @@ export function ArchaeologistView() {
               {/* Upload Zone */}
               <Card className="bg-white border border-slate-200 shadow-sm">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-base font-semibold text-slate-800">Upload Zone</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div
-                    onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-                    onDragLeave={() => setIsDragging(false)}
-                    onDrop={handleDrop}
-                    className={cn(
-                      "border-2 border-dashed rounded-xl p-12 text-center transition-all",
-                      isDragging 
-                        ? "border-teal-400 bg-teal-50" 
-                        : "border-slate-300 hover:border-slate-400 bg-slate-50"
-                    )}
-                  >
-                    <Upload className={cn("w-12 h-12 mx-auto mb-4", isDragging ? "text-teal-500" : "text-slate-400")} />
-                    <h3 className="text-lg font-semibold text-slate-700 mb-2">
-                      Drag & Drop Legacy Data
-                    </h3>
-                    <p className="text-slate-500 text-sm mb-4">
-                      PDFs, CSVs, PST Archives, Excel files
-                    </p>
-                    <div className="flex flex-wrap gap-2 justify-center">
-                      {["PDF", "DOCX", "XLSX", "CSV", "PST", "TIFF"].map(format => (
-                        <Badge key={format} variant="outline" className="bg-white border-slate-300 text-slate-600">
-                          {format}
-                        </Badge>
-                      ))}
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base font-semibold text-slate-800">Upload Zone</CardTitle>
+                    <div className="flex gap-1 bg-slate-100 rounded-lg p-1">
+                      <button
+                        onClick={() => setUploadMode("manual")}
+                        className={cn(
+                          "px-3 py-1.5 text-xs font-medium rounded-md transition-all",
+                          uploadMode === "manual" 
+                            ? "bg-white text-slate-900 shadow-sm" 
+                            : "text-slate-500 hover:text-slate-700"
+                        )}
+                      >
+                        <Upload className="w-3.5 h-3.5 inline mr-1" />
+                        Manual
+                      </button>
+                      <button
+                        onClick={() => setUploadMode("cloud")}
+                        className={cn(
+                          "px-3 py-1.5 text-xs font-medium rounded-md transition-all",
+                          uploadMode === "cloud" 
+                            ? "bg-white text-slate-900 shadow-sm" 
+                            : "text-slate-500 hover:text-slate-700"
+                        )}
+                      >
+                        <Cloud className="w-3.5 h-3.5 inline mr-1" />
+                        Cloud
+                      </button>
                     </div>
                   </div>
+                </CardHeader>
+                <CardContent>
+                  {uploadMode === "manual" ? (
+                    <div
+                      onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                      onDragLeave={() => setIsDragging(false)}
+                      onDrop={handleDrop}
+                      className={cn(
+                        "border-2 border-dashed rounded-xl p-12 text-center transition-all",
+                        isDragging 
+                          ? "border-teal-400 bg-teal-50" 
+                          : "border-slate-300 hover:border-slate-400 bg-slate-50"
+                      )}
+                    >
+                      <Upload className={cn("w-12 h-12 mx-auto mb-4", isDragging ? "text-teal-500" : "text-slate-400")} />
+                      <h3 className="text-lg font-semibold text-slate-700 mb-2">
+                        Drag & Drop Legacy Data
+                      </h3>
+                      <p className="text-slate-500 text-sm mb-4">
+                        PDFs, CSVs, PST Archives, Excel files
+                      </p>
+                      <div className="flex flex-wrap gap-2 justify-center">
+                        {["PDF", "DOCX", "XLSX", "CSV", "PST", "TIFF"].map(format => (
+                          <Badge key={format} variant="outline" className="bg-white border-slate-300 text-slate-600">
+                            {format}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border-2 border-slate-200 p-8 text-center bg-slate-50">
+                      {connectedProviders.length > 0 ? (
+                        <>
+                          <Cloud className="w-12 h-12 mx-auto mb-4 text-teal-500" />
+                          <h3 className="text-lg font-semibold text-slate-700 mb-2">
+                            Select from Connected Drives
+                          </h3>
+                          <p className="text-slate-500 text-sm mb-4">
+                            {connectedProviders.length} provider{connectedProviders.length > 1 ? "s" : ""} connected
+                          </p>
+                          <div className="flex flex-wrap gap-2 justify-center mb-6">
+                            {connectedProviders.map(provider => (
+                              <Badge 
+                                key={provider.id} 
+                                className="bg-emerald-100 text-emerald-700 border border-emerald-200"
+                              >
+                                {provider.name}
+                              </Badge>
+                            ))}
+                          </div>
+                          <Button 
+                            onClick={() => setCloudPickerOpen(true)}
+                            className="bg-teal-600 hover:bg-teal-700 text-white"
+                          >
+                            <FolderOpen className="w-4 h-4 mr-2" />
+                            Browse Files
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <CloudCog className="w-12 h-12 mx-auto mb-4 text-slate-400" />
+                          <h3 className="text-lg font-semibold text-slate-700 mb-2">
+                            No Drives Connected
+                          </h3>
+                          <p className="text-slate-500 text-sm mb-4">
+                            Connect cloud storage providers to select files directly
+                          </p>
+                          <Button 
+                            onClick={() => setCurrentView("sync-configuration")}
+                            variant="outline"
+                            className="border-slate-200 text-slate-700"
+                          >
+                            <CloudCog className="w-4 h-4 mr-2" />
+                            Configure Sync
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -328,7 +450,14 @@ export function ArchaeologistView() {
                               <FileText className="w-8 h-8 text-slate-400" />
                               <div>
                                 <p className="font-medium text-slate-800 text-sm">{file.name}</p>
-                                <p className="text-xs text-slate-500">{formatFileSize(file.size)}</p>
+                                <div className="flex items-center gap-2">
+                                  <p className="text-xs text-slate-500">{formatFileSize(file.size)}</p>
+                                  {file.source && file.source !== "upload" && (
+                                    <Badge variant="outline" className="text-[10px] py-0 px-1.5 border-slate-200 text-slate-500">
+                                      {sourceNames[file.source] || file.source}
+                                    </Badge>
+                                  )}
+                                </div>
                               </div>
                             </div>
                             {file.status === "complete" ? (
@@ -580,6 +709,13 @@ export function ArchaeologistView() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Cloud File Picker Modal */}
+        <CloudFilePicker
+          open={cloudPickerOpen}
+          onOpenChange={setCloudPickerOpen}
+          onFilesSelected={handleCloudFilesSelected}
+        />
       </div>
     </div>
   );

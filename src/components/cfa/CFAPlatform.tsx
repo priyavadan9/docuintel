@@ -5,6 +5,7 @@ import { CFADashboard } from "./views/CFADashboard";
 import { ArchaeologistView } from "./views/ArchaeologistView";
 import { DetectiveView } from "./views/DetectiveView";
 import { OrchestratorView } from "./views/OrchestratorView";
+import { SyncConfigurationView } from "./views/SyncConfigurationView";
 
 function CFAContent() {
   const { currentView } = useCFA();
@@ -13,7 +14,8 @@ function CFAContent() {
     dashboard: <CFADashboard />,
     archaeologist: <ArchaeologistView />,
     detective: <DetectiveView />,
-    orchestrator: <OrchestratorView />
+    orchestrator: <OrchestratorView />,
+    "sync-configuration": <SyncConfigurationView />
   };
 
   return views[currentView] || <CFADashboard />;

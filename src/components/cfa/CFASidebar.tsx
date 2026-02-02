@@ -7,7 +7,8 @@ import {
   Shield,
   ChevronLeft,
   FileText,
-  AlertTriangle
+  AlertTriangle,
+  CloudCog
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -26,7 +27,9 @@ interface CFASidebarProps {
 }
 
 export function CFASidebar({ onClose }: CFASidebarProps) {
-  const { currentView, setCurrentView, stats, documents, rfiTasks } = useCFA();
+  const { currentView, setCurrentView, stats, documents, rfiTasks, cloudProviders } = useCFA();
+
+  const connectedProvidersCount = cloudProviders.filter(p => p.connected).length;
 
   const navItems: NavItem[] = [
     {
@@ -42,6 +45,14 @@ export function CFASidebar({ onClose }: CFASidebarProps) {
       description: "Data ingestion & OCR",
       badge: documents.filter(d => d.status === "pending" || d.status === "processing").length || undefined,
       badgeType: "default"
+    },
+    {
+      id: "sync-configuration",
+      label: "Sync Configuration",
+      icon: CloudCog,
+      description: "Cloud storage connections",
+      badge: connectedProvidersCount > 0 ? connectedProvidersCount : undefined,
+      badgeType: "success"
     },
     {
       id: "detective",

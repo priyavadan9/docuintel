@@ -1,10 +1,19 @@
 import React, { createContext, useContext, useState, ReactNode, useMemo } from "react";
 
-export type CFAView = "dashboard" | "archaeologist" | "detective" | "orchestrator" | "documents" | "suppliers" | "chemicals";
+export type CFAView = "dashboard" | "archaeologist" | "detective" | "orchestrator" | "documents" | "suppliers" | "chemicals" | "sync-configuration";
 export type RiskLevel = "high" | "medium" | "low";
 export type ProcessingStatus = "uploading" | "ocr" | "extracting" | "complete" | "error";
 export type DocumentStatus = "pending" | "processing" | "indexed" | "verified" | "error";
+export type CloudSource = "google-drive" | "dropbox" | "onedrive" | "box" | "sharepoint" | "aws-s3" | "upload";
 
+export interface CloudProvider {
+  id: string;
+  name: string;
+  connected: boolean;
+  accountEmail?: string;
+  lastSynced?: Date;
+  filesCount?: number;
+}
 export interface ChemicalRecord {
   id: string;
   productName: string;
@@ -55,6 +64,7 @@ export interface UploadedFile {
   size: number;
   status: ProcessingStatus;
   progress: number;
+  source?: CloudSource;
   extractedData?: {
     date: string;
     supplier: string;
@@ -175,6 +185,10 @@ interface CFAContextType {
   searchResults: SearchResult[];
   searchOpen: boolean;
   setSearchOpen: (open: boolean) => void;
+  
+  // Cloud providers
+  cloudProviders: CloudProvider[];
+  setCloudProviders: React.Dispatch<React.SetStateAction<CloudProvider[]>>;
   
   // Chart data with real backing
   chartData: { month: string; processed: number; risks: number }[];
@@ -430,6 +444,7 @@ export function CFAProvider({ children }: { children: ReactNode }) {
   const [currentRfiTask, setCurrentRfiTask] = useState<RFITask | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
+  const [cloudProviders, setCloudProviders] = useState<CloudProvider[]>([]);
 
   // Calculate stats from actual data
   const stats = useMemo(() => ({
@@ -535,6 +550,8 @@ export function CFAProvider({ children }: { children: ReactNode }) {
         searchResults,
         searchOpen,
         setSearchOpen,
+        cloudProviders,
+        setCloudProviders,
         chartData: chartDataWithBacking
       }}
     >
