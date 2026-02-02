@@ -5,7 +5,6 @@ import {
   Search, 
   Workflow,
   Shield,
-  ChevronLeft,
   FileText,
   AlertTriangle,
   CloudCog
@@ -22,11 +21,7 @@ interface NavItem {
   badgeType?: "default" | "warning" | "success";
 }
 
-interface CFASidebarProps {
-  onClose?: () => void;
-}
-
-export function CFASidebar({ onClose }: CFASidebarProps) {
+export function CFASidebar() {
   const { currentView, setCurrentView, stats, documents, rfiTasks, cloudProviders } = useCFA();
 
   const connectedProvidersCount = cloudProviders.filter(p => p.connected).length;
@@ -84,24 +79,14 @@ export function CFASidebar({ onClose }: CFASidebarProps) {
     <aside className="w-64 bg-slate-900 flex flex-col h-full">
       {/* Header */}
       <div className="p-4 border-b border-slate-700">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-teal-600 flex items-center justify-center">
-              <Shield className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h1 className="font-bold text-white text-sm">Compliance</h1>
-              <p className="text-xs text-slate-400">Forensic Agent</p>
-            </div>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-teal-600 flex items-center justify-center">
+            <Shield className="w-5 h-5 text-white" />
           </div>
-          {onClose && (
-            <button 
-              onClick={onClose}
-              className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-          )}
+          <div>
+            <h1 className="font-bold text-white text-sm">Compliance</h1>
+            <p className="text-xs text-slate-400">Forensic Agent</p>
+          </div>
         </div>
       </div>
 

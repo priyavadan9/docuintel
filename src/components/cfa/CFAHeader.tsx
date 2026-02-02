@@ -1,10 +1,11 @@
 import { useCFA } from "@/contexts/CFAContext";
-import { Search, Bell, User, Clock, AlertTriangle, FileText, FlaskConical, Building2, X } from "lucide-react";
+import { Search, Clock, AlertTriangle, FileText, FlaskConical, Building2, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
+import { NotificationPopover } from "./NotificationPopover";
+import { UserDropdown } from "./UserDropdown";
 
 export function CFAHeader() {
   const { 
@@ -177,23 +178,10 @@ export function CFAHeader() {
         )}
 
         {/* Notifications */}
-        <Button variant="ghost" size="icon" className="relative text-slate-600 hover:text-slate-900 hover:bg-slate-100">
-          <Bell className="w-5 h-5" />
-          <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 rounded-full text-[10px] text-white flex items-center justify-center font-medium">
-            3
-          </span>
-        </Button>
+        <NotificationPopover />
 
         {/* User Profile */}
-        <div className="flex items-center gap-3 pl-4 border-l border-slate-200">
-          <div className="text-right">
-            <p className="text-sm font-medium text-slate-900">John Smith</p>
-            <p className="text-xs text-slate-500">Compliance Officer</p>
-          </div>
-          <div className="w-9 h-9 rounded-full bg-teal-600 flex items-center justify-center">
-            <User className="w-5 h-5 text-white" />
-          </div>
-        </div>
+        <UserDropdown />
       </div>
     </header>
   );
