@@ -40,9 +40,9 @@ export function CFASidebar({ onClose }: CFASidebarProps) {
     },
     {
       id: "archaeologist",
-      label: "The Archaeologist",
+      label: "The Alchemist",
       icon: Pickaxe,
-      description: "Data ingestion & OCR",
+      description: "Transform docs to intelligence",
       badge: documents.filter(d => d.status === "pending" || d.status === "processing").length || undefined,
       badgeType: "default"
     },

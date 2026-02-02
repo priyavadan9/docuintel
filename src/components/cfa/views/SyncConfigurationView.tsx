@@ -123,21 +123,30 @@ export function SyncConfigurationView() {
     const mockFile = mockSyncedFiles[Math.floor(Math.random() * mockSyncedFiles.length)];
     const providerName = providerConfig[provider.id as keyof typeof providerConfig]?.name || provider.name;
     
-    // Create new document from synced file
-    const newDoc: Document = {
-      id: `doc-sync-${Date.now()}`,
-      name: mockFile.name,
-      type: mockFile.name.endsWith(".pdf") ? "pdf" : mockFile.name.endsWith(".xlsx") ? "xlsx" : "csv",
-      size: mockFile.size,
-      uploadedAt: new Date(),
-      processedAt: new Date(),
-      status: "indexed",
-      source: provider.id as any,
-      syncedFrom: providerName,
-      extractedChemicals: Math.floor(Math.random() * 5) + 1,
-    };
-
-    setDocuments(prev => [newDoc, ...prev]);
+    // Check for duplicates (same name + provider = single record)
+    setDocuments(prev => {
+      const existingDoc = prev.find(d => d.name === mockFile.name && d.syncedFrom === providerName);
+      if (existingDoc) {
+        // Update existing doc's uploadedAt
+        return prev.map(d => d.id === existingDoc.id ? { ...d, uploadedAt: new Date() } : d);
+      }
+      
+      // Create new document from synced file
+      const newDoc: Document = {
+        id: `doc-sync-${Date.now()}-${Math.random()}`,
+        name: mockFile.name,
+        type: mockFile.name.endsWith(".pdf") ? "pdf" : mockFile.name.endsWith(".xlsx") ? "xlsx" : "csv",
+        size: mockFile.size,
+        uploadedAt: new Date(),
+        processedAt: new Date(),
+        status: "indexed",
+        source: "cloud-storage",
+        syncedFrom: providerName,
+        extractedChemicals: Math.floor(Math.random() * 5) + 1,
+      };
+      
+      return [newDoc, ...prev];
+    });
     
     // Update provider last synced and file count
     setCloudProviders(prev => prev.map(p => 
@@ -151,8 +160,6 @@ export function SyncConfigurationView() {
       user: "System",
       details: `${mockFile.name} synced from ${providerName}`,
       type: "system",
-      relatedId: newDoc.id,
-      relatedType: "document"
     });
 
     toast.success(`File synced from ${providerName}`, {

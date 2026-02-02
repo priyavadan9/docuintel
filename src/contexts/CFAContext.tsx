@@ -41,7 +41,7 @@ export interface Document {
   uploadedAt: Date;
   processedAt?: Date;
   status: DocumentStatus;
-  source: "upload" | "email" | "drive" | "legacy" | "google-drive" | "dropbox" | "onedrive" | "box" | "sharepoint" | "aws-s3";
+  source: "cloud-storage" | "legacy-archive";
   extractedChemicals: number;
   syncedFrom?: string; // Provider name for tooltip
   extractedData?: {
@@ -213,16 +213,16 @@ const mockSuppliers: Supplier[] = [
 
 // Mock documents
 const mockDocuments: Document[] = [
-  { id: "d1", name: "2014_Warehouse_Invoice.pdf", type: "pdf", size: 245678, uploadedAt: new Date("2024-01-15"), processedAt: new Date("2024-01-15"), status: "indexed", source: "legacy", extractedChemicals: 3 },
-  { id: "d2", name: "Purchase_Order_2012.pdf", type: "pdf", size: 189234, uploadedAt: new Date("2024-01-14"), processedAt: new Date("2024-01-14"), status: "verified", source: "legacy", extractedChemicals: 2 },
-  { id: "d3", name: "Supplier_SDS_2018.pdf", type: "pdf", size: 567890, uploadedAt: new Date("2024-01-13"), processedAt: new Date("2024-01-13"), status: "indexed", source: "upload", extractedChemicals: 1 },
-  { id: "d4", name: "Inventory_Report_Q2_2011.xlsx", type: "xlsx", size: 123456, uploadedAt: new Date("2024-01-12"), processedAt: new Date("2024-01-12"), status: "indexed", source: "legacy", extractedChemicals: 4 },
-  { id: "d5", name: "Lab_Analysis_2015.pdf", type: "pdf", size: 345678, uploadedAt: new Date("2024-01-11"), processedAt: new Date("2024-01-11"), status: "verified", source: "upload", extractedChemicals: 2 },
-  { id: "d6", name: "Material_Safety_Sheet.pdf", type: "pdf", size: 234567, uploadedAt: new Date("2024-01-10"), status: "indexed", source: "email", extractedChemicals: 1 },
-  { id: "d7", name: "Batch_Record_2013.pdf", type: "pdf", size: 456789, uploadedAt: new Date("2024-01-09"), status: "pending", source: "legacy", extractedChemicals: 0 },
-  { id: "d8", name: "Compliance_Report_2016.pdf", type: "pdf", size: 789012, uploadedAt: new Date("2024-01-08"), processedAt: new Date("2024-01-08"), status: "verified", source: "drive", extractedChemicals: 5 },
-  { id: "d9", name: "Vendor_List_2014.xlsx", type: "xlsx", size: 98765, uploadedAt: new Date("2024-01-07"), status: "processing", source: "legacy", extractedChemicals: 0 },
-  { id: "d10", name: "Chemical_Manifest_2017.csv", type: "csv", size: 45678, uploadedAt: new Date("2024-01-06"), processedAt: new Date("2024-01-06"), status: "indexed", source: "upload", extractedChemicals: 8 },
+  { id: "d1", name: "2014_Warehouse_Invoice.pdf", type: "pdf", size: 245678, uploadedAt: new Date("2024-01-15"), processedAt: new Date("2024-01-15"), status: "indexed", source: "legacy-archive", extractedChemicals: 3 },
+  { id: "d2", name: "Purchase_Order_2012.pdf", type: "pdf", size: 189234, uploadedAt: new Date("2024-01-14"), processedAt: new Date("2024-01-14"), status: "verified", source: "legacy-archive", extractedChemicals: 2 },
+  { id: "d3", name: "Supplier_SDS_2018.pdf", type: "pdf", size: 567890, uploadedAt: new Date("2024-01-13"), processedAt: new Date("2024-01-13"), status: "indexed", source: "legacy-archive", extractedChemicals: 1 },
+  { id: "d4", name: "Inventory_Report_Q2_2011.xlsx", type: "xlsx", size: 123456, uploadedAt: new Date("2024-01-12"), processedAt: new Date("2024-01-12"), status: "indexed", source: "legacy-archive", extractedChemicals: 4 },
+  { id: "d5", name: "Lab_Analysis_2015.pdf", type: "pdf", size: 345678, uploadedAt: new Date("2024-01-11"), processedAt: new Date("2024-01-11"), status: "verified", source: "legacy-archive", extractedChemicals: 2 },
+  { id: "d6", name: "Material_Safety_Sheet.pdf", type: "pdf", size: 234567, uploadedAt: new Date("2024-01-10"), status: "indexed", source: "legacy-archive", extractedChemicals: 1 },
+  { id: "d7", name: "Batch_Record_2013.pdf", type: "pdf", size: 456789, uploadedAt: new Date("2024-01-09"), status: "pending", source: "legacy-archive", extractedChemicals: 0 },
+  { id: "d8", name: "Compliance_Report_2016.pdf", type: "pdf", size: 789012, uploadedAt: new Date("2024-01-08"), processedAt: new Date("2024-01-08"), status: "verified", source: "cloud-storage", extractedChemicals: 5, syncedFrom: "Google Drive" },
+  { id: "d9", name: "Vendor_List_2014.xlsx", type: "xlsx", size: 98765, uploadedAt: new Date("2024-01-07"), status: "processing", source: "legacy-archive", extractedChemicals: 0 },
+  { id: "d10", name: "Chemical_Manifest_2017.csv", type: "csv", size: 45678, uploadedAt: new Date("2024-01-06"), processedAt: new Date("2024-01-06"), status: "indexed", source: "legacy-archive", extractedChemicals: 8 },
 ];
 
 // Mock chemical records
