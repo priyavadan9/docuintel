@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useCFA, CloudProvider } from "@/contexts/CFAContext";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useCFA, CloudProvider, SyncFrequency, Document } from "@/contexts/CFAContext";
 import { 
   Cloud, 
   Check, 
@@ -9,7 +9,9 @@ import {
   RefreshCw,
   HardDrive,
   Building2,
-  ExternalLink
+  ExternalLink,
+  Timer,
+  Zap
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,8 +24,42 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+
+// Sync frequency options
+const syncFrequencyOptions: { value: SyncFrequency; label: string }[] = [
+  { value: "15min", label: "Every 15 minutes" },
+  { value: "30min", label: "Every 30 minutes" },
+  { value: "1hour", label: "Every 1 hour" },
+  { value: "6hours", label: "Every 6 hours" },
+  { value: "daily", label: "Daily" },
+];
+
+// Mock file names for auto-sync simulation
+const mockSyncedFiles = [
+  { name: "Q4_2023_PFAS_Inventory.pdf", size: 234567 },
+  { name: "Supplier_Compliance_Report.pdf", size: 456789 },
+  { name: "Chemical_Safety_Data_Sheet.xlsx", size: 123456 },
+  { name: "Manufacturing_Process_Docs.pdf", size: 345678 },
+  { name: "Environmental_Audit_2024.pdf", size: 567890 },
+  { name: "Vendor_PFAS_Declaration.pdf", size: 198765 },
+  { name: "Product_Testing_Results.csv", size: 87654 },
+  { name: "Regulatory_Compliance_Matrix.xlsx", size: 234567 },
+];
 
 // Provider logos and colors
 const providerConfig = {
@@ -72,11 +108,93 @@ const providerConfig = {
 };
 
 export function SyncConfigurationView() {
-  const { cloudProviders, setCloudProviders, addAuditEntry } = useCFA();
+  const { cloudProviders, setCloudProviders, addAuditEntry, setDocuments } = useCFA();
   const [connectingProvider, setConnectingProvider] = useState<string | null>(null);
   const [oauthModalOpen, setOauthModalOpen] = useState(false);
   const [disconnectModalOpen, setDisconnectModalOpen] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState<CloudProvider | null>(null);
+  const syncTimersRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
+
+  // Simulate auto-sync for connected providers
+  const simulateAutoSync = useCallback((provider: CloudProvider) => {
+    if (!provider.connected || !provider.syncFrequency) return;
+
+    // Pick a random file to "sync"
+    const mockFile = mockSyncedFiles[Math.floor(Math.random() * mockSyncedFiles.length)];
+    const providerName = providerConfig[provider.id as keyof typeof providerConfig]?.name || provider.name;
+    
+    // Create new document from synced file
+    const newDoc: Document = {
+      id: `doc-sync-${Date.now()}`,
+      name: mockFile.name,
+      type: mockFile.name.endsWith(".pdf") ? "pdf" : mockFile.name.endsWith(".xlsx") ? "xlsx" : "csv",
+      size: mockFile.size,
+      uploadedAt: new Date(),
+      processedAt: new Date(),
+      status: "indexed",
+      source: provider.id as any,
+      syncedFrom: providerName,
+      extractedChemicals: Math.floor(Math.random() * 5) + 1,
+    };
+
+    setDocuments(prev => [newDoc, ...prev]);
+    
+    // Update provider last synced and file count
+    setCloudProviders(prev => prev.map(p => 
+      p.id === provider.id 
+        ? { ...p, lastSynced: new Date(), filesCount: (p.filesCount || 0) + 1 }
+        : p
+    ));
+
+    addAuditEntry({
+      action: "Auto-Sync Complete",
+      user: "System",
+      details: `${mockFile.name} synced from ${providerName}`,
+      type: "system",
+      relatedId: newDoc.id,
+      relatedType: "document"
+    });
+
+    toast.success(`File synced from ${providerName}`, {
+      description: mockFile.name,
+    });
+  }, [setDocuments, setCloudProviders, addAuditEntry]);
+
+  // Set up auto-sync timers for connected providers
+  useEffect(() => {
+    const connectedProviders = cloudProviders.filter(p => p.connected && p.syncFrequency);
+    
+    // Clear old timers
+    syncTimersRef.current.forEach((timer, id) => {
+      if (!connectedProviders.find(p => p.id === id)) {
+        clearInterval(timer);
+        syncTimersRef.current.delete(id);
+      }
+    });
+
+    // Set up new timers (using shorter intervals for demo purposes)
+    connectedProviders.forEach(provider => {
+      if (!syncTimersRef.current.has(provider.id)) {
+        // For demo: use 30 seconds for "15min", 45s for "30min", etc.
+        const demoIntervals: Record<SyncFrequency, number> = {
+          "15min": 30000,
+          "30min": 45000,
+          "1hour": 60000,
+          "6hours": 90000,
+          "daily": 120000,
+        };
+        
+        const interval = demoIntervals[provider.syncFrequency!] || 45000;
+        const timer = setInterval(() => simulateAutoSync(provider), interval);
+        syncTimersRef.current.set(provider.id, timer);
+      }
+    });
+
+    return () => {
+      syncTimersRef.current.forEach(timer => clearInterval(timer));
+      syncTimersRef.current.clear();
+    };
+  }, [cloudProviders, simulateAutoSync]);
 
   const handleConnect = (providerId: string) => {
     setConnectingProvider(providerId);
@@ -103,6 +221,8 @@ export function SyncConfigurationView() {
       accountEmail: mockEmails[connectingProvider] || "user@company.com",
       lastSynced: new Date(),
       filesCount: Math.floor(Math.random() * 500) + 100,
+      syncFrequency: "30min",
+      autoSyncEnabled: true,
     };
 
     setCloudProviders(prev => {
@@ -154,12 +274,17 @@ export function SyncConfigurationView() {
   };
 
   const handleSync = (provider: CloudProvider) => {
+    simulateAutoSync(provider);
+  };
+
+  const handleFrequencyChange = (providerId: string, frequency: SyncFrequency) => {
     setCloudProviders(prev => prev.map(p => 
-      p.id === provider.id ? { ...p, lastSynced: new Date() } : p
+      p.id === providerId ? { ...p, syncFrequency: frequency } : p
     ));
 
-    toast.success(`${provider.name} synced`, {
-      description: "File index updated",
+    const providerName = providerConfig[providerId as keyof typeof providerConfig]?.name || providerId;
+    toast.success(`Sync frequency updated`, {
+      description: `${providerName} will sync ${syncFrequencyOptions.find(o => o.value === frequency)?.label.toLowerCase()}`,
     });
   };
 
@@ -303,12 +428,52 @@ export function SyncConfigurationView() {
                             {formatLastSynced(provider.lastSynced!)}
                           </span>
                         </div>
+                        
+                        {/* Sync Frequency Dropdown */}
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-slate-500 flex items-center gap-1">
+                            <Timer className="w-3.5 h-3.5" />
+                            Sync Frequency
+                          </span>
+                          <Select 
+                            value={provider.syncFrequency || "30min"} 
+                            onValueChange={(value) => handleFrequencyChange(provider.id, value as SyncFrequency)}
+                          >
+                            <SelectTrigger className="w-36 h-7 text-xs border-slate-200 bg-white">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {syncFrequencyOptions.map(option => (
+                                <SelectItem key={option.value} value={option.value} className="text-xs">
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-slate-500">Files indexed</span>
                           <span className="text-slate-700 font-medium">
                             {provider.filesCount?.toLocaleString()}
                           </span>
                         </div>
+
+                        {/* Auto-sync indicator */}
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center gap-1.5 text-xs text-emerald-600 bg-emerald-50 rounded-md px-2 py-1 border border-emerald-200">
+                                <Zap className="w-3 h-3" />
+                                <span className="font-medium">Auto-sync enabled</span>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Files will be automatically synced based on your schedule</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+
                         <div className="flex gap-2 pt-2">
                           <Button 
                             variant="outline" 
@@ -317,7 +482,7 @@ export function SyncConfigurationView() {
                             onClick={() => handleSync(provider)}
                           >
                             <RefreshCw className="w-3.5 h-3.5 mr-1" />
-                            Sync
+                            Sync Now
                           </Button>
                           <Button 
                             variant="outline" 
