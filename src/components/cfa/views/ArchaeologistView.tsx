@@ -9,7 +9,6 @@ import {
   Eye,
   Sparkles,
   FileSearch,
-  Mail,
   Cloud,
   Archive,
   ChevronRight,
@@ -39,29 +38,22 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-// Source name mapping
-const sourceNames: Record<string, string> = {
-  "google-drive": "Google Drive",
-  dropbox: "Dropbox",
-  onedrive: "OneDrive",
-  box: "Box",
-  sharepoint: "SharePoint",
-  "aws-s3": "AWS S3",
-  upload: "Manual Upload",
-  email: "Email",
-  drive: "Cloud Drive",
-  legacy: "Legacy Archive",
+// Source name mapping - only two types now
+const sourceDisplayNames: Record<string, string> = {
+  "cloud-storage": "Cloud Storage",
+  "legacy-archive": "Legacy Archive",
 };
 
-// Provider icons (small colored indicators)
-const providerColors: Record<string, string> = {
-  "google-drive": "bg-blue-500",
-  dropbox: "bg-sky-500",
-  onedrive: "bg-indigo-500",
-  box: "bg-blue-600",
-  sharepoint: "bg-teal-600",
-  "aws-s3": "bg-orange-500",
+// Provider icons for syncedFrom tooltip
+const syncedFromColors: Record<string, string> = {
+  "Google Drive": "bg-blue-500",
+  "Dropbox": "bg-sky-500",
+  "OneDrive": "bg-indigo-500",
+  "Box": "bg-blue-600",
+  "SharePoint": "bg-teal-600",
+  "AWS S3": "bg-orange-500",
 };
+
 
 export function ArchaeologistView() {
   const { 
@@ -173,7 +165,7 @@ export function ArchaeologistView() {
       uploadedAt: new Date(),
       processedAt: new Date(),
       status: "indexed",
-      source: "upload",
+      source: "legacy-archive",
       extractedChemicals: 1,
       extractedData: file.extractedData
     };
@@ -239,16 +231,6 @@ export function ArchaeologistView() {
       default: return { className: "bg-slate-100 text-slate-700 border-slate-200", label: status };
     }
   };
-
-  const getSourceIcon = (source: string) => {
-    switch (source) {
-      case "email": return Mail;
-      case "drive": return Cloud;
-      case "legacy": return Archive;
-      default: return Upload;
-    }
-  };
-
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -273,9 +255,9 @@ export function ArchaeologistView() {
           <div>
             <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
               <Sparkles className="w-6 h-6 text-teal-600" />
-              The Archaeologist
+              The Alchemist
             </h2>
-            <p className="text-slate-500 mt-1">Unearth hidden PFAS data from legacy documents</p>
+            <p className="text-slate-500 mt-1">Transform raw documents into actionable PFAS intelligence</p>
           </div>
           <Button onClick={handleMockUpload} className="bg-teal-600 hover:bg-teal-700 text-white">
             <Upload className="w-4 h-4 mr-2" />
@@ -396,11 +378,6 @@ export function ArchaeologistView() {
                                 <p className="font-medium text-slate-800 text-sm">{file.name}</p>
                                 <div className="flex items-center gap-2">
                                   <p className="text-xs text-slate-500">{formatFileSize(file.size)}</p>
-                                  {file.source && file.source !== "upload" && (
-                                    <Badge variant="outline" className="text-[10px] py-0 px-1.5 border-slate-200 text-slate-500">
-                                      {sourceNames[file.source] || file.source}
-                                    </Badge>
-                                  )}
                                 </div>
                               </div>
                             </div>
@@ -598,11 +575,10 @@ export function ArchaeologistView() {
                       </thead>
                       <tbody>
                         {filteredDocuments.map((doc, index) => {
-                          const SourceIcon = getSourceIcon(doc.source);
                           const status = getDocStatusBadge(doc.status);
-                          const isCloudSource = ["google-drive", "dropbox", "onedrive", "box", "sharepoint", "aws-s3"].includes(doc.source);
-                          const sourceName = sourceNames[doc.source] || doc.source;
-                          const colorDot = providerColors[doc.source];
+                          const isCloudStorage = doc.source === "cloud-storage";
+                          const displaySource = sourceDisplayNames[doc.source] || doc.source;
+                          const colorDot = doc.syncedFrom ? syncedFromColors[doc.syncedFrom] : "bg-teal-500";
                           
                           return (
                             <tr 
@@ -626,23 +602,26 @@ export function ArchaeologistView() {
                                   <Tooltip>
                                     <TooltipTrigger asChild>
                                       <div className="flex items-center gap-2">
-                                        {isCloudSource ? (
+                                        {isCloudStorage ? (
                                           <>
-                                            <div className={cn("w-2 h-2 rounded-full", colorDot || "bg-slate-400")} />
-                                            <span className="text-sm text-slate-700 font-medium">{sourceName}</span>
+                                            <Cloud className="w-4 h-4 text-teal-500" />
+                                            <span className="text-sm text-slate-700 font-medium">{displaySource}</span>
+                                            {doc.syncedFrom && (
+                                              <div className={cn("w-2 h-2 rounded-full", colorDot)} />
+                                            )}
                                           </>
                                         ) : (
                                           <>
-                                            <SourceIcon className="w-4 h-4 text-slate-400" />
-                                            <span className="text-sm text-slate-600 capitalize">{sourceName}</span>
+                                            <Archive className="w-4 h-4 text-slate-400" />
+                                            <span className="text-sm text-slate-600">{displaySource}</span>
                                           </>
                                         )}
                                       </div>
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                      {isCloudSource 
-                                        ? `Synced automatically from ${doc.syncedFrom || sourceName}` 
-                                        : `Uploaded via ${sourceName}`
+                                      {isCloudStorage 
+                                        ? `Synced automatically from ${doc.syncedFrom || 'Cloud Storage'}` 
+                                        : "Historical document from legacy archive"
                                       }
                                     </TooltipContent>
                                   </Tooltip>
