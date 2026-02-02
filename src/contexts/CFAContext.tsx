@@ -6,6 +6,8 @@ export type ProcessingStatus = "uploading" | "ocr" | "extracting" | "complete" |
 export type DocumentStatus = "pending" | "processing" | "indexed" | "verified" | "error";
 export type CloudSource = "google-drive" | "dropbox" | "onedrive" | "box" | "sharepoint" | "aws-s3" | "upload";
 
+export type SyncFrequency = "15min" | "30min" | "1hour" | "6hours" | "daily";
+
 export interface CloudProvider {
   id: string;
   name: string;
@@ -13,6 +15,8 @@ export interface CloudProvider {
   accountEmail?: string;
   lastSynced?: Date;
   filesCount?: number;
+  syncFrequency?: SyncFrequency;
+  autoSyncEnabled?: boolean;
 }
 export interface ChemicalRecord {
   id: string;
@@ -37,8 +41,9 @@ export interface Document {
   uploadedAt: Date;
   processedAt?: Date;
   status: DocumentStatus;
-  source: "upload" | "email" | "drive" | "legacy";
+  source: "upload" | "email" | "drive" | "legacy" | "google-drive" | "dropbox" | "onedrive" | "box" | "sharepoint" | "aws-s3";
   extractedChemicals: number;
+  syncedFrom?: string; // Provider name for tooltip
   extractedData?: {
     date: string;
     supplier: string;
