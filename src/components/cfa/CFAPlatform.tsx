@@ -10,7 +10,7 @@ import { SyncConfigurationView } from "./views/SyncConfigurationView";
 function CFAContent() {
   const { currentView } = useCFA();
 
-  const views = {
+  const views: Record<string, React.ReactNode> = {
     dashboard: <CFADashboard />,
     archaeologist: <ArchaeologistView />,
     detective: <DetectiveView />,
@@ -18,18 +18,14 @@ function CFAContent() {
     "sync-configuration": <SyncConfigurationView />
   };
 
-  return views[currentView] || <CFADashboard />;
+  return <>{views[currentView] || <CFADashboard />}</>;
 }
 
-interface CFAPlatformProps {
-  onClose: () => void;
-}
-
-export function CFAPlatform({ onClose }: CFAPlatformProps) {
+export function CFAPlatform() {
   return (
     <CFAProvider>
       <div className="fixed inset-0 z-50 bg-slate-50 flex animate-fade-in">
-        <CFASidebar onClose={onClose} />
+        <CFASidebar />
         <div className="flex-1 flex flex-col overflow-hidden">
           <CFAHeader />
           <main className="flex-1 overflow-auto">

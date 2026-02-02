@@ -1,15 +1,13 @@
-import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Upload, Sparkles, Brain, Zap } from "lucide-react";
-import { CFAPlatform } from "@/components/cfa/CFAPlatform";
 
 export function HeroSection() {
-  const [demoOpen, setDemoOpen] = useState(false);
+  const navigate = useNavigate();
 
-  // If demo is open, render the full CFA platform
-  if (demoOpen) {
-    return <CFAPlatform onClose={() => setDemoOpen(false)} />;
-  }
+  const handleDemo = () => {
+    navigate("/login");
+  };
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
@@ -44,11 +42,11 @@ export function HeroSection() {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-            <Button variant="hero" size="xl" className="group">
+            <Button variant="hero" size="xl" className="group" onClick={handleDemo}>
               Start Free Trial
               <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Button>
-            <Button variant="glass" size="xl" onClick={() => setDemoOpen(true)}>
+            <Button variant="glass" size="xl" onClick={handleDemo}>
               Watch Demo
             </Button>
           </div>
